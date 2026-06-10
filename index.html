@@ -1,415 +1,936 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" id="html-root">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clara - Personal Learning Companion</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clara — Matemática</title>
+<meta name="description" content="Tu compañera de aprendizaje matemático con IA">
+<meta name="theme-color" content="#4A7C6F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Clara">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sage: #4A7C6F; --sage-light: #E8F0EE; --sage-mid: #7BA99E;
+    --warm: #C47B3A; --warm-light: #FDF3E7;
+    --ink: #1C2B26; --ink-mid: #4A5E57; --ink-light: #8A9E98;
+    --surface: #FAFAF8; --white: #FFFFFF;
+    --border: rgba(74,124,111,0.15); --border-mid: rgba(74,124,111,0.3);
+    --radius: 12px; --radius-sm: 8px;
+  }
+  body { font-family: 'Georgia','Times New Roman',serif; background: var(--surface); color: var(--ink); min-height: 100vh; font-size: 16px; line-height: 1.7; }
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; }
+
+  /* TOPNAV */
+  .topnav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--white); position: sticky; top: 0; z-index: 10; }
+  .topnav-brand { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .nav-leaf { width: 22px; height: 22px; background: var(--sage); border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+  .nav-name { font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--sage); font-family: 'Georgia',serif; }
+  .topnav-right { display: flex; align-items: center; gap: 8px; }
+  .topnav-home { font-size: 13px; color: var(--sage); font-family: -apple-system,sans-serif; cursor: pointer; padding: 6px 14px; border: 1px solid var(--border-mid); border-radius: 20px; background: none; transition: all 0.15s; }
+  .topnav-home:hover { background: var(--sage-light); }
+  .lang-btn { font-size: 12px; color: var(--ink-mid); font-family: -apple-system,sans-serif; cursor: pointer; padding: 5px 10px; border: 1px solid var(--border-mid); border-radius: 20px; background: none; transition: all 0.15s; }
+  .lang-btn:hover { background: var(--sage-light); }
+
+  /* PASSWORD */
+  #screen-password { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .password-box { max-width: 480px; width: 90%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; padding: 2rem; }
+  .brand-mark { display: inline-flex; align-items: center; gap: 10px; }
+  .brand-leaf { width: 36px; height: 36px; background: var(--sage); border-radius: 50% 50% 50% 0; transform: rotate(-45deg); flex-shrink: 0; }
+  .brand-name { font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sage); font-family: 'Georgia',serif; font-weight: normal; }
+  .password-title { font-size: 24px; font-weight: normal; font-family: 'Georgia',serif; }
+  .password-sub { font-size: 14px; color: var(--ink-mid); font-family: -apple-system,sans-serif; line-height: 1.6; }
+  .pass-error { color: #c0392b; font-size: 13px; font-family: -apple-system,sans-serif; display: none; }
+  .tip-box { background: var(--sage-light); border-left: 3px solid var(--sage); border-radius: var(--radius); padding: 1rem 1.25rem; text-align: left; font-family: -apple-system,sans-serif; font-size: 13px; color: var(--ink-mid); line-height: 1.7; width: 100%; }
+  .tip-box ul { padding-left: 1.2rem; margin-top: 4px; }
+  .tip-title { font-weight: 600; color: var(--sage); margin-bottom: 6px; }
+
+  /* SHARED */
+  .inner { max-width: 680px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+  .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+  .back-btn { background: none; border: 1px solid var(--border-mid); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 16px; color: var(--ink-mid); transition: background 0.15s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .back-btn:hover { background: var(--sage-light); }
+  .page-title { font-size: 20px; font-weight: normal; font-family: 'Georgia',serif; }
+  .section { margin-bottom: 2rem; }
+  .label { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 10px; display: block; font-family: -apple-system,sans-serif; }
+  .sublabel { font-size: 13px; color: var(--ink-light); margin-bottom: 8px; display: block; font-family: -apple-system,sans-serif; }
+  textarea.field { width: 100%; padding: 12px 14px; border: 1px solid var(--border-mid); border-radius: var(--radius-sm); font-size: 14px; font-family: -apple-system,sans-serif; color: var(--ink); background: var(--white); resize: vertical; min-height: 90px; outline: none; transition: border-color 0.15s; }
+  textarea.field:focus { border-color: var(--sage); }
+  textarea.field::placeholder { color: var(--ink-light); }
+  input.field { width: 100%; padding: 11px 14px; border: 1px solid var(--border-mid); border-radius: var(--radius-sm); font-size: 14px; font-family: -apple-system,sans-serif; color: var(--ink); background: var(--white); outline: none; transition: border-color 0.15s; }
+  input.field:focus { border-color: var(--sage); }
+  input.field::placeholder { color: var(--ink-light); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 20px; font-size: 13px; cursor: pointer; background: var(--white); color: var(--ink-mid); font-family: -apple-system,sans-serif; transition: all 0.15s; user-select: none; }
+  .chip:hover { border-color: var(--sage-mid); color: var(--sage); }
+  .chip.on { background: var(--sage); border-color: var(--sage); color: white; }
+  .btn { border: none; border-radius: 60px; font-family: -apple-system,sans-serif; cursor: pointer; transition: all 0.15s; font-size: 14px; padding: 11px 24px; }
+  .btn-sage { background: var(--sage); color: white; }
+  .btn-sage:hover { background: #3d6b5f; }
+  .btn-outline { background: transparent; color: var(--sage); border: 1px solid var(--border-mid); }
+  .btn-outline:hover { background: var(--sage-light); border-color: var(--sage); }
+  .btn-warm { background: var(--warm); color: white; }
+  .btn-warm:hover { background: #a8662e; }
+  .btn-full { width: 100%; margin-top: 1rem; padding: 13px; font-size: 15px; }
+  .file-drop { border: 2px dashed var(--border-mid); border-radius: var(--radius); padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--white); }
+  .file-drop:hover { border-color: var(--sage-mid); background: var(--sage-light); }
+  .file-name { display: none; align-items: center; gap: 8px; padding: 8px 12px; background: var(--sage-light); border-radius: var(--radius-sm); font-size: 13px; color: var(--sage); font-family: -apple-system,sans-serif; margin-top: 8px; }
+  .file-name.visible { display: flex; }
+  .hidden-upload { display: none; }
+  .notice { background: var(--warm-light); border: 1px solid rgba(196,123,58,0.25); border-radius: var(--radius); padding: 1rem 1.25rem; font-size: 13px; color: var(--ink-mid); font-family: -apple-system,sans-serif; line-height: 1.6; margin-bottom: 1.5rem; }
+  .nivel-grado { display: none; margin-top: 1rem; }
+  .nivel-grado.visible { display: block; }
+
+  /* LANDING */
+  #screen-landing { display: none; flex-direction: column; }
+  #screen-landing.active { display: flex; }
+  .landing-hero { padding: 3rem 2rem 2rem; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; max-width: 680px; margin: 0 auto; width: 100%; }
+  .hero-title { font-size: clamp(26px,5vw,40px); font-weight: normal; line-height: 1.25; font-family: 'Georgia',serif; }
+  .hero-title em { font-style: italic; color: var(--sage); }
+  .hero-sub { font-size: 15px; color: var(--ink-mid); max-width: 460px; line-height: 1.65; font-family: -apple-system,sans-serif; }
+  .mode-cards { display: flex; gap: 1rem; width: 100%; max-width: 520px; }
+  .mode-card { flex: 1; background: var(--white); border: 1px solid var(--border-mid); border-radius: var(--radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .mode-card:hover { border-color: var(--sage); background: var(--sage-light); transform: translateY(-2px); }
+  .mode-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+  .mode-title { font-size: 15px; font-family: 'Georgia',serif; color: var(--ink); margin-bottom: 4px; }
+  .mode-desc { font-size: 12px; color: var(--ink-light); font-family: -apple-system,sans-serif; line-height: 1.4; }
+  .resume-banner { background: var(--sage-light); border: 1px solid var(--border-mid); border-radius: var(--radius); padding: 1rem 1.25rem; width: 100%; max-width: 520px; display: none; }
+  .resume-banner.visible { display: block; }
+  .resume-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sage-mid); font-family: -apple-system,sans-serif; margin-bottom: 6px; }
+  .resume-text { font-size: 14px; color: var(--ink); font-family: -apple-system,sans-serif; margin-bottom: 10px; }
+  .features-strip { display: flex; border-top: 1px solid var(--border); }
+  .feat { flex: 1; padding: 1.25rem 0.5rem; text-align: center; border-right: 1px solid var(--border); font-family: -apple-system,sans-serif; }
+  .feat:last-child { border-right: none; }
+  .feat-icon { font-size: 20px; margin-bottom: 4px; display: block; }
+  .feat-label { font-size: 11px; color: var(--ink-mid); line-height: 1.4; }
+
+  /* LOADING */
+  .loading-screen { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; text-align: center; padding: 2rem; }
+  .loading-leaf { width: 48px; height: 48px; background: var(--sage); border-radius: 50% 50% 50% 0; transform: rotate(-45deg); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:rotate(-45deg) scale(1)} 50%{opacity:0.6;transform:rotate(-45deg) scale(0.88)} }
+  .loading-text { font-size: 16px; color: var(--ink-mid); font-family: -apple-system,sans-serif; }
+  .loading-sub { font-size: 13px; color: var(--ink-light); font-family: -apple-system,sans-serif; max-width: 300px; }
+
+  /* ROADMAP */
+  .roadmap-intro { font-size: 15px; color: var(--ink-mid); font-family: -apple-system,sans-serif; line-height: 1.65; margin-bottom: 1.5rem; background: var(--sage-light); padding: 1rem 1.25rem; border-radius: var(--radius); border-left: 3px solid var(--sage); }
+  .roadmap-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+  .roadmap-step { display: flex; align-items: flex-start; gap: 12px; background: var(--white); border: 1px solid var(--border-mid); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer; transition: all 0.15s; }
+  .roadmap-step:hover { border-color: var(--sage-mid); }
+  .roadmap-step.done { opacity: 0.65; }
+  .roadmap-step.current { border-color: var(--warm); background: var(--warm-light); }
+  .step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--border-mid); color: var(--ink-mid); display: flex; align-items: center; justify-content: center; font-size: 12px; font-family: -apple-system,sans-serif; flex-shrink: 0; margin-top: 2px; }
+  .roadmap-step.done .step-num { background: var(--sage-mid); color: white; }
+  .roadmap-step.current .step-num { background: var(--warm); color: white; }
+  .step-info { flex: 1; }
+  .step-name { font-size: 14px; color: var(--ink); font-family: -apple-system,sans-serif; font-weight: 500; }
+  .step-desc { font-size: 12px; color: var(--ink-light); font-family: -apple-system,sans-serif; margin-top: 2px; line-height: 1.4; }
+  .step-badge-done { font-size: 11px; color: var(--sage); background: var(--sage-light); padding: 2px 8px; border-radius: 10px; font-family: -apple-system,sans-serif; white-space: nowrap; }
+  .step-badge-cur { font-size: 11px; color: var(--warm); background: var(--warm-light); padding: 2px 8px; border-radius: 10px; font-family: -apple-system,sans-serif; white-space: nowrap; }
+  .roadmap-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* SESSION */
+  .session-header { background: var(--sage-light); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; border-left: 3px solid var(--sage); }
+  .session-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sage-mid); font-family: -apple-system,sans-serif; margin-bottom: 4px; }
+  .session-title { font-size: 18px; font-family: 'Georgia',serif; color: var(--ink); }
+  .content-block { font-size: 15px; color: var(--ink); line-height: 1.85; font-family: -apple-system,sans-serif; margin-bottom: 2rem; }
+  .content-block h3 { font-size: 17px; font-weight: 600; margin: 1.5rem 0 0.5rem; font-family: 'Georgia',serif; color: var(--sage); }
+  .content-block h3:first-child { margin-top: 0; }
+  .exercises-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-light); font-family: -apple-system,sans-serif; margin-bottom: 1rem; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .exercise-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  .ex-num { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--warm); font-family: -apple-system,sans-serif; margin-bottom: 8px; }
+  .ex-question { font-size: 15px; color: var(--ink); line-height: 1.65; font-family: -apple-system,sans-serif; margin-bottom: 1rem; }
+  .ex-textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-mid); border-radius: var(--radius-sm); font-size: 14px; font-family: -apple-system,sans-serif; resize: vertical; min-height: 70px; outline: none; color: var(--ink); transition: border-color 0.15s; margin-bottom: 10px; }
+  .ex-textarea:focus { border-color: var(--sage); }
+  .ex-textarea::placeholder { color: var(--ink-light); }
+  .ex-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ex-feedback { background: var(--warm-light); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: var(--ink-mid); font-family: -apple-system,sans-serif; display: none; border-left: 3px solid var(--warm); line-height: 1.6; margin-top: 10px; }
+  .ex-feedback.visible { display: block; }
+  .ex-correct { background: var(--sage-light); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: var(--ink); font-family: -apple-system,sans-serif; display: none; border-left: 3px solid var(--sage); line-height: 1.6; margin-top: 6px; }
+  .ex-correct.visible { display: block; }
+  .session-footer { border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 2rem; }
+  .footer-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+
+  /* DOCENTE */
+  .guia-header { background: var(--sage-light); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; border-left: 3px solid var(--sage); }
+  .guia-titulo { font-size: 18px; font-family: 'Georgia',serif; color: var(--ink); margin-bottom: 4px; }
+  .guia-intro { font-size: 13px; color: var(--ink-mid); line-height: 1.6; font-family: -apple-system,sans-serif; }
+  .guia-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  .guia-nivel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sage); font-family: -apple-system,sans-serif; margin-bottom: 6px; }
+  .guia-consigna { font-size: 15px; color: var(--ink); line-height: 1.65; font-family: -apple-system,sans-serif; margin-bottom: 1rem; white-space: pre-line; }
+  .guia-respuesta { background: var(--sage-light); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: var(--ink); font-family: -apple-system,sans-serif; display: none; border-left: 3px solid var(--sage); line-height: 1.6; margin-top: 8px; }
+  .guia-respuesta.visible { display: block; }
+  .print-hint { font-size: 12px; color: var(--ink-light); font-family: -apple-system,sans-serif; text-align: center; margin-top: 1rem; }
+
+  @media print {
+    .topnav, .back-btn, .btn, .print-hint { display: none !important; }
+    .guia-respuesta { display: none !important; }
+    .screen { display: block !important; min-height: auto; }
+    body { background: white; }
+  }
+
+  @media (max-width: 500px) {
+    .mode-cards { flex-direction: column; }
+    .footer-btns { flex-direction: column; }
+    .roadmap-actions { flex-direction: column; }
+  }
+</style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen">
+<body>
 
-    <div id="app"></div>
+<!-- CONTRASEÑA -->
+<div id="screen-password" class="screen active">
+  <div class="password-box">
+    <div class="brand-mark"><div class="brand-leaf"></div><span class="brand-name">Clara</span></div>
+    <h1 class="password-title" data-t="welcome">Bienvenida</h1>
 
-    <script>
-        // Estado global de la aplicación
-        let lang = 'es';
-        let section = 'home';
-        let meta = 'duda';
-        let cronogramaCalculado = false;
-        let procesando = false;
-        let resultadoSimulado = null;
+    <div class="tip-box">
+      <p class="tip-title">✨ <span data-t="tip_title">Antes de empezar</span></p>
+      <p data-t="tip_intro">Lo que Clara te proponga depende de cómo le explicás lo que necesitás. Cuanto más detalle, mejor la propuesta.</p>
+      <br>
+      <p><strong data-t="tip_learn_title">Si querés aprender:</strong></p>
+      <ul>
+        <li data-t="tip_learn_1">Contale tu nivel, qué ya sabés y para qué lo necesitás</li>
+        <li data-t="tip_learn_2">Subí tu programa o material si tenés</li>
+        <li data-t="tip_learn_3">Indicá cuánto tiempo tenés disponible</li>
+      </ul>
+      <br>
+      <p><strong data-t="tip_teach_title">Si sos docente:</strong></p>
+      <ul>
+        <li data-t="tip_teach_1">Especificá el nivel, grado/año y lo que necesitás</li>
+        <li data-t="tip_teach_2">Subí el programa o material orientador</li>
+        <li data-t="tip_teach_3">Describí el contexto del grupo</li>
+      </ul>
+      <br>
+      <p style="color:var(--ink-light);font-style:italic;font-size:12px;" data-t="tip_footer">Si el resultado no te convence, revisá cómo formulaste el pedido 🌱</p>
+    </div>
 
-        // Textos bilingües fieles al diseño original
-        const t = {
-            es: {
-                title: 'Clara',
-                subtitle: 'Tu compañera de aprendizaje personalizado con IA',
-                volver: '← Volver',
-                consejoTitulo: '💡 Un consejo antes de empezar:',
-                adjuntarLabel: '📁 Adjuntar archivo (PDF, recortes de diseño o fotos de consignas):',
-                
-                // Home original
-                homeTitle: '¡Hola! Soy Clara',
-                homeSubtitle: 'Tu compañera inteligente de aprendizaje y planificadora didáctica. Elegí el camino que querés recorrer hoy:',
-                homeBtnContenidos: 'Quiero aprender',
-                homeDescContenidos: 'Construí tu propio proyecto personalizado de aprendizaje para comprender conceptos y resolver problemas matemáticos de cualquier nivel.',
-                homeBtnDidactica: 'Soy docente',
-                homeDescDidactica: 'Diseñá secuencias didácticas, planificaciones reales e integrales con múltiples enfoques didácticos y atención a la diversidad.',
-                
-                // Contenidos Matemáticos
-                contTitulo: 'Contenidos Matemáticos',
-                contConsejo: 'Para que la explicación te ayude a entender a fondo, sé lo más específico posible con el tema. Decime qué contenido o dificultad querés destrabar, así Clara puede prepararte los mejores gráficos, juegos o el paso a paso justo para vos.',
-                contPreguntaNivel: 'Nivel académico / Curso / Grado:',
-                contPreguntaQue: 'Contame detalladamente qué contenido necesitás aprender o qué duda querés resolver:',
-                contPlaceholderQue: 'Ej: Estoy trabada con las fracciones equivalentes, me cuesta darme cuenta de cómo simplificar gráficamente...',
-                contPreguntaComo: '¿Cómo preferís aprenderlo? (Elegí la opción más concreta para vos)',
-                contOp1: 'Con dibujos y gráficos',
-                contOp2: 'Con juegos y desafíos prácticos',
-                contOp3: 'Explicado paso a paso desde cero',
-                btnComenzar: '¡Comenzar a aprender!',
-                
-                // Planificador integrado
-                planTitulo: '💡 Tu Plan de Estudio Personalizado',
-                planDesc: 'Configurá tu disponibilidad para que Clara arme tu cronograma. Podés cambiar esto en cualquier momento si tus horarios cambian.',
-                planMeta: '¿Cuál es tu meta?',
-                planMetaDuda: 'Estudiar un tema por mi cuenta / sacarme una duda',
-                planMetaExamen: 'Preparar un examen',
-                planFechaExamen: 'Fecha del examen:',
-                planDispo: '¿De cuánto tiempo disponés para estudiar? (Podés armarlo como prefieras)',
-                planDispOp1: 'Una clase diaria de 20 minutos.',
-                planDispOp2: '3 veces por semana en bloques de 90 minutos.',
-                planDispOp3: 'Personalizado',
-                btnCronograma: 'Calcular / Modificar Cronograma',
-                cronoAlerta: '¡Cronograma recalculado con éxito! Clara adaptará el paso a paso a tu ritmo diario.',
+    <p class="password-sub" data-t="pass_sub">Ingresá la contraseña de acceso de tu membresía.</p>
+    <input type="text" class="field" id="password-input" placeholder="Contraseña" autocomplete="off" onkeydown="if(event.key==='Enter')checkPass()" style="text-align:center;" />
+    <p class="pass-error" id="pass-error" data-t="pass_error">Contraseña incorrecta.</p>
+    <button class="btn btn-sage btn-full" onclick="checkPass()" data-t="btn_enter">Entrar</button>
+    <button class="lang-btn" onclick="toggleLang()" id="lang-toggle">🌐 English</button>
+    <p style="font-size:12px;color:var(--ink-light);font-family:-apple-system,sans-serif;" data-t="membership">Parte de la membresía · Matemática con Sentido</p>
+  </div>
+</div>
 
-                // Didáctica de la Matemática original
-                didTitulo: 'Tu diseñador de estrategias didácticas',
-                didSub: 'Te acompaño a pensar la clase: creá situaciones de aprendizaje reales y encontrá estrategias claras para guiar a tus estudiantes.',
-                didConsejo: 'Para que las estrategias te sirvan de verdad, sé lo más específico posible. Contame cómo es tu grupo, qué necesitan tus alumnos y con cuánto tiempo (semanas, clases o módulos) contás para trabajar este tema en el aula. Así podemos diseñar situaciones diferenciadas que se adapten a tu realidad.',
-                didPreguntaNivel: 'Level / Grade / Course:',
-                didNivelSeleccione: 'Seleccioná el nivel...',
-                didNivel1: 'Primaria - Primer Ciclo (1° a 3°)',
-                didNivel2: 'Primaria - Segundo Ciclo (4° a 7°)',
-                didNivel3: 'Secundaria / Media',
-                didNivel4: 'Formación Docente / Adultos',
-                didPreguntaMomento: 'Momento de la clase o secuencia:',
-                didMomento1: 'Inicio / Motivación',
-                didMomento2: 'Desarrollo / Construcción del concepto',
-                didMomento3: 'Cierre / Institucionalización',
-                didMomento4: 'Secuencia completa',
-                didPreguntaTema: 'Contame en detalle qué contenido vas a trabajar y las características de tu grupo:',
-                didPlaceholderTema: 'Ej: Voy a dar multiplicación por dos cifras en 4to grado. Cuentan con 3 módulos semanales de 80 minutos. Necesito un enfoque constructivista...',
-                didPreguntaDiversidad: 'Atención a la diversidad (Opcional):',
-                btnGenerar: 'Diseñar Estrategias',
+<!-- LANDING -->
+<div id="screen-landing" class="screen">
+  <div class="landing-hero">
+    <div class="brand-mark"><div class="brand-leaf"></div><span class="brand-name">Clara</span></div>
+    <h1 class="hero-title" data-t="hero_title">Matemática,<br><em>a tu manera</em></h1>
+    <p class="hero-sub" data-t="hero_sub">Tu compañera de aprendizaje matemático con IA. Elegí cómo querés trabajar hoy.</p>
+    <div class="resume-banner" id="resume-banner">
+      <div class="resume-title" data-t="resume_title">Tenés un aprendizaje en curso</div>
+      <div class="resume-text" id="resume-text">—</div>
+      <button class="btn btn-sage" onclick="resumeLearning()" data-t="btn_resume">Continuar donde dejé →</button>
+    </div>
+    <div class="mode-cards">
+      <div class="mode-card" onclick="goTo('contenidos')">
+        <span class="mode-icon">🔢</span>
+        <div class="mode-title" data-t="mode1_title">Contenidos Matemáticos</div>
+        <div class="mode-desc" data-t="mode1_desc">Aprendé o repasá matemática con un camino personalizado</div>
+      </div>
+      <div class="mode-card" onclick="goTo('didactica')">
+        <span class="mode-icon">📐</span>
+        <div class="mode-title" data-t="mode2_title">Didáctica de la Matemática</div>
+        <div class="mode-desc" data-t="mode2_desc">Generá secuencias y actividades para tus alumnos</div>
+      </div>
+    </div>
+    <button class="lang-btn" onclick="toggleLang()" id="lang-toggle-landing">🌐 English</button>
+  </div>
+  <div class="features-strip">
+    <div class="feat"><span class="feat-icon">🗺️</span><div class="feat-label" data-t="feat1">Camino<br>personalizado</div></div>
+    <div class="feat"><span class="feat-icon">📊</span><div class="feat-label" data-t="feat2">Todos los<br>niveles</div></div>
+    <div class="feat"><span class="feat-icon">✏️</span><div class="feat-label" data-t="feat3">Ejercicios con<br>respuestas</div></div>
+    <div class="feat"><span class="feat-icon">💾</span><div class="feat-label" data-t="feat4">Guarda tu<br>progreso</div></div>
+  </div>
+</div>
 
-                // Simulación de Respuestas
-                procesandoTxt: 'Clara está analizando tu propuesta...',
-                resultadoTitulo: '✨ Respuesta Diseñada por Clara'
-            },
-            en: {
-                title: 'Clara',
-                subtitle: 'Your intelligent AI learning companion and didactic planner',
-                volver: '← Back',
-                consejoTitulo: '💡 A word of advice before starting:',
-                adjuntarLabel: '📁 Attach file (PDF, design clips, or screenshots of tasks):',
-                
-                // Home original
-                homeTitle: 'Hi! I\'m Clara',
-                homeSubtitle: 'Your intelligent learning companion and didactic planner. Choose the path you want to take today:',
-                homeBtnContenidos: 'I want to learn',
-                homeDescContenidos: 'Build your own personalized learning project to understand concepts and solve mathematical problems of any level.',
-                homeBtnDidactica: 'I\'m a teacher',
-                homeDescDidactica: 'Design didactic sequences, real and comprehensive plans with multiple teaching approaches and attention to diversity.',
-                
-                // Contenidos Matemáticos
-                contTitulo: 'Mathematical Content',
-                contConsejo: 'For the explanation to fully help you understand, please be as specific as possible with the topic. Tell me what content or difficulty you want to unlock, so Clara can prepare the best graphics, games, or the exact step-by-step for you.',
-                contPreguntaNivel: 'Academic Level / Course / Grade:',
-                contPreguntaQue: 'Tell me in detail what content you need to learn or what doubt you want to solve:',
-                contPlaceholderQue: 'e.g., I am stuck with equivalent fractions, I struggle to realize how to simplify graphically...',
-                contPreguntaComo: 'How do you prefer to learn it? (Choose the most concrete option for you)',
-                contOp1: 'With drawings and graphs',
-                contOp2: 'With games and practical challenges',
-                contOp3: 'Explained step-by-step from scratch',
-                btnComenzar: 'Start Learning!',
-                
-                // Planificador integrado
-                planTitulo: '💡 Your Personalized Study Plan',
-                planDesc: 'Set your availability so Clara can build your schedule. You can modify this at any time if your hours change.',
-                planMeta: 'What is your goal?',
-                planMetaDuda: 'Study a topic on my own / clear up a doubt',
-                planMetaExamen: 'Prepare for an exam',
-                planFechaExamen: 'Exam date:',
-                planDispo: 'How much time do you have to study? (Set it as you prefer)',
-                planDispOp1: 'A daily 20-minute class.',
-                planDispOp2: '3 times a week in 90-minute blocks.',
-                planDispOp3: 'Customized',
-                btnCronograma: 'Calculate / Modify Schedule',
-                cronoAlerta: 'Schedule successfully recalculated! Clara will adapt the step-by-step to your daily pace.',
+<!-- CONTENIDOS MATEMÁTICOS -->
+<div id="screen-contenidos" class="screen">
+  <div class="topnav">
+    <div class="topnav-brand" onclick="goTo('landing')"><div class="nav-leaf"></div><span class="nav-name">Clara</span></div>
+    <div class="topnav-right">
+      <button class="lang-btn" onclick="toggleLang()" id="lang-toggle-c">🌐 English</button>
+      <button class="topnav-home" onclick="goTo('landing')" data-t="btn_home">← Inicio</button>
+    </div>
+  </div>
+  <div class="inner">
+    <div class="page-header"><button class="back-btn" onclick="goTo('landing')">←</button><span class="page-title" data-t="mode1_title">Contenidos Matemáticos</span></div>
 
-                // Didáctica de la Matemática original
-                didTitulo: 'Your didactic strategy designer',
-                didSub: 'I accompany you to design your class: create real learning situations and find clear strategies to guide your students.',
-                didConsejo: 'For the strategies to truly work for you, please be as specific as possible. Tell me about your group, what your students need, and how much time (weeks, classes, or modules) you have to work on this topic in the classroom. This way we can design differentiated situations tailored to your reality.',
-                didPreguntaNivel: 'Level / Grade / Course:',
-                didNivelSeleccione: 'Select level...',
-                didNivel1: 'Primary - First Cycle (1st to 3rd Grade)',
-                didNivel2: 'Primary - Second Cycle (4th to 7th Grade)',
-                didNivel3: 'Secondary / High School',
-                didNivel4: 'Teacher Training / Adults',
-                didPreguntaMomento: 'Lesson / Sequence Stage:',
-                didMomento1: 'Warm-up / Motivation',
-                didMomento2: 'Development / Concept Building',
-                didMomento3: 'Wrap-up / Institutionalization',
-                didMomento4: 'Full sequence',
-                didPreguntaTema: 'Tell me in detail what content you will work on and your group details:',
-                didPlaceholderTema: 'e.g., I am going to teach long division in 4th grade. They have 3 weekly modules of 80 minutes. I need constructivist ideas...',
-                didPreguntaDiversidad: 'Attention to diversity (Optional):',
-                btnGenerar: 'Design Strategies',
+    <div class="section">
+      <label class="label" data-t="c_nivel_label">¿Cuál es tu nivel educativo?</label>
+      <div class="chips" data-g="c-nivel">
+        <div class="chip" onclick="pickNivel(this,'c-nivel','c-grado-wrap')" data-t="nivel_primaria">Primaria</div>
+        <div class="chip" onclick="pickNivel(this,'c-nivel','c-grado-wrap')" data-t="nivel_secundaria">Secundaria</div>
+        <div class="chip" onclick="pickNivel(this,'c-nivel','c-grado-wrap')" data-t="nivel_terciario">Terciario</div>
+        <div class="chip" onclick="pickNivel(this,'c-nivel','c-grado-wrap')" data-t="nivel_universitario">Universitario</div>
+      </div>
+      <div class="nivel-grado" id="c-grado-wrap">
+        <label class="sublabel" data-t="c_grado_label">¿Qué grado, año o curso específicamente?</label>
+        <input type="text" class="field" id="c-grado" placeholder="Ej: 3° año, 2do semestre, 1° grado..." />
+      </div>
+    </div>
 
-                // Simulación de Respuestas
-                procesandoTxt: 'Clara is analyzing your request...',
-                resultadoTitulo: '✨ Response Designed by Clara'
-            }
-        };
+    <div class="section">
+      <label class="label" data-t="c_tema_label">¿Qué querés aprender o repasar?</label>
+      <span class="sublabel" data-t="c_tema_sub">Describí en detalle — cuanto más específico, mejor la propuesta.</span>
+      <textarea class="field" id="c-tema" style="min-height:120px;" placeholder="Ej: Quiero entender fracciones desde cero, especialmente la división de fracciones que siempre me confunde. Ya sé sumar y restar fracciones..."></textarea>
+    </div>
 
-        // Función para renderizar toda la interfaz dinámica
-        function render() {
-            const current = t[lang];
-            let html = `
-                <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
-                    <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-                        <div class="flex items-center space-x-2 cursor-pointer" onclick="navigate('home')">
-                            <div class="relative bg-emerald-50 p-2 rounded-full">
-                                <span class="text-2xl">💡</span>
-                                <span class="absolute bottom-0 right-1 text-[10px]">😊</span>
-                            </div>
-                            <div>
-                                <h1 class="text-xl font-bold tracking-tight text-slate-900">${current.title}</h1>
-                            </div>
-                        </div>
-                        <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
-                            <button onclick="setLanguage('es')" class="px-3 py-1.5 rounded-md transition-all ${lang === 'es' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">Español</button>
-                            <button onclick="setLanguage('en')" class="px-3 py-1.5 rounded-md transition-all ${lang === 'en' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">English</button>
-                        </div>
-                    </div>
-                </header>
-                <main class="max-w-5xl mx-auto px-4 py-8">
-            `;
+    <div class="section">
+      <label class="label" data-t="c_enfoque_label">¿Qué tipo de aprendizaje buscás?</label>
+      <div class="chips" data-g="c-enfoque">
+        <div class="chip" onclick="pick(this,'c-enfoque')" data-t="enfoque_conceptual">Entender la lógica y el por qué</div>
+        <div class="chip" onclick="pick(this,'c-enfoque')" data-t="enfoque_practico">Práctica y ejercicios</div>
+        <div class="chip" onclick="pick(this,'c-enfoque')" data-t="enfoque_ambos">Los dos</div>
+        <div class="chip" onclick="pick(this,'c-enfoque')" data-t="enfoque_examen">Preparar un examen</div>
+        <div class="chip" onclick="pick(this,'c-enfoque')" data-t="enfoque_enseñar">Para poder enseñarlo</div>
+      </div>
+    </div>
 
-            if (section !== 'home') {
-                html += `<button onclick="navigate('home')" class="mb-6 text-sm font-medium text-emerald-600 hover:text-emerald-800">${current.volver}</button>`;
-            }
+    <div class="section">
+      <label class="label" data-t="c_proposito_label">¿Para qué lo necesitás?</label>
+      <div class="chips" data-g="c-proposito">
+        <div class="chip" onclick="pick(this,'c-proposito')" data-t="prop_examen">Para un examen o evaluación</div>
+        <div class="chip" onclick="pick(this,'c-proposito')" data-t="prop_trabajo">Para aplicarlo en mi trabajo</div>
+        <div class="chip" onclick="pick(this,'c-proposito')" data-t="prop_curiosidad">Por curiosidad o interés propio</div>
+        <div class="chip" onclick="pick(this,'c-proposito')" data-t="prop_enseñar">Para enseñarle a otros</div>
+        <div class="chip" onclick="pick(this,'c-proposito')" data-t="prop_acompanar">Para acompañar a un niño o joven</div>
+      </div>
+    </div>
 
-            // ==========================================
-            // VISTA HOME ORIGINAL RECONSTRUIDA
-            // ==========================================
-            if (section === 'home') {
-                html += `
-                    <div class="max-w-3xl mx-auto text-center py-12">
-                        <h2 class="text-3xl font-bold text-slate-900 mb-2">${current.homeTitle}</h2>
-                        <p class="text-slate-600 text-sm max-w-xl mx-auto mb-10 leading-relaxed">${current.homeSubtitle}</p>
-                        
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div class="bg-white border border-slate-200 rounded-xl p-6 text-center flex flex-col justify-between items-center shadow-sm">
-                                <div class="flex flex-col items-center">
-                                    <h3 class="text-lg font-bold text-slate-900 mb-2">${current.homeBtnContenidos}</h3>
-                                    <p class="text-slate-500 text-sm leading-relaxed mb-6">${current.homeDescContenidos}</p>
-                                </div>
-                                <button onclick="navigate('contenidos')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-all">
-                                    ${current.homeBtnContenidos}
-                                </button>
-                            </div>
-                            
-                            <div class="bg-white border border-slate-200 rounded-xl p-6 text-center flex flex-col justify-between items-center shadow-sm">
-                                <div class="flex flex-col items-center">
-                                    <h3 class="text-lg font-bold text-slate-900 mb-2">${current.homeBtnDidactica}</h3>
-                                    <p class="text-slate-500 text-sm leading-relaxed mb-6">${current.homeDescDidactica}</p>
-                                </div>
-                                <button onclick="navigate('didactica')" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold py-2.5 rounded-lg transition-all">
-                                    ${current.homeBtnDidactica}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+    <div class="section">
+      <label class="label" data-t="c_tiempo_label">¿Cuánto tiempo tenés disponible para aprender?</label>
+      <div class="chips" data-g="c-tiempo">
+        <div class="chip" onclick="pick(this,'c-tiempo')" data-t="tiempo_poco">Poco — menos de 1 hora por semana</div>
+        <div class="chip" onclick="pick(this,'c-tiempo')" data-t="tiempo_medio">Moderado — 1 a 3 horas por semana</div>
+        <div class="chip" onclick="pick(this,'c-tiempo')" data-t="tiempo_mucho">Bastante — más de 3 horas por semana</div>
+        <div class="chip" onclick="pick(this,'c-tiempo')" data-t="tiempo_intensivo">Intensivo — tengo fecha límite</div>
+      </div>
+    </div>
 
-            // ==========================================
-            // VISTA CONTENIDOS MATEMÁTICOS (REPARADA)
-            // ==========================================
-            if (section === 'contenidos') {
-                html += `
-                    <div class="max-w-2xl mx-auto bg-white border border-slate-200 rounded-xl p-6 md:p-8 shadow-sm">
-                        <h2 class="text-xl font-bold text-slate-900 border-b pb-3 mb-5">📖 ${current.contTitulo}</h2>
-                        
-                        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-5">
-                            <h4 class="font-bold text-amber-900 text-xs mb-0.5">${current.consejoTitulo}</h4>
-                            <p class="text-amber-950 text-xs leading-relaxed">${current.contConsejo}</p>
-                        </div>
+    <div class="section">
+      <label class="label" data-t="c_pdf_label">¿Tenés un programa, guía o material? <span style="color:var(--ink-light);font-weight:400;" data-t="opcional">(opcional)</span></label>
+      <span class="sublabel" data-t="c_pdf_sub">Si subís el programa de tu materia o curso, Clara puede adaptar el camino exactamente a lo que necesitás.</span>
+      <div class="file-drop" onclick="document.getElementById('upload-contenidos').click()">
+        <input type="file" id="upload-contenidos" class="hidden-upload" accept=".pdf,.docx,.doc" onchange="loadFile(this,'contenidos')" />
+        <p style="font-size:14px;color:var(--ink-mid);font-family:-apple-system,sans-serif;" data-t="file_select">Hacé clic para seleccionar</p>
+        <p style="font-size:12px;color:var(--ink-light);font-family:-apple-system,sans-serif;margin-top:4px;">PDF o Word (.docx)</p>
+      </div>
+      <div class="file-name" id="fname-contenidos"><span id="fname-contenidos-text"></span></div>
+    </div>
 
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">${current.contPreguntaNivel}</label>
-                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-emerald-500">
-                                    <option value="">${current.didNivelSeleccione}</option>
-                                    <option value="1">${current.didNivel1}</option>
-                                    <option value="2">${current.didNivel2}</option>
-                                    <option value="3">${current.didNivel3}</option>
-                                    <option value="4">${current.didNivel4}</option>
-                                </select>
-                            </div>
+    <div class="section">
+      <label class="label" data-t="c_extra_label">¿Algo más que Clara deba saber? <span style="color:var(--ink-light);font-weight:400;" data-t="opcional">(opcional)</span></label>
+      <textarea class="field" id="c-extra" placeholder="Ej: Me genera mucha ansiedad la matemática, aprendo mejor con ejemplos visuales, tengo el examen en 2 semanas..."></textarea>
+    </div>
 
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">${current.contPreguntaQue}</label>
-                                <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm h-28 resize-none focus:outline-emerald-500" placeholder="${current.contPlaceholderQue}"></textarea>
-                            </div>
+    <button class="btn btn-sage btn-full" onclick="generateRoadmap()" data-t="btn_generar_camino">Que Clara arme mi camino ✨</button>
+  </div>
+</div>
 
-                            <div class="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3">
-                                <label class="block text-xs font-bold text-slate-700 mb-1.5">${current.adjuntarLabel}</label>
-                                <input type="file" class="text-xs text-slate-600 block w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
-                            </div>
+<!-- LOADING -->
+<div id="screen-loading" class="screen">
+  <div class="topnav"><div class="topnav-brand" onclick="goTo('landing')"><div class="nav-leaf"></div><span class="nav-name">Clara</span></div></div>
+  <div class="inner"><div class="loading-screen"><div class="loading-leaf"></div><p class="loading-text" id="loading-text">Clara está analizando...</p><p class="loading-sub" data-t="loading_sub">Esto puede tardar unos segundos.</p></div></div>
+</div>
 
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">${current.contPreguntaComo}</label>
-                                <div class="space-y-1.5 text-sm font-medium">
-                                    <label class="flex items-center space-x-2.5 p-2 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="como" checked class="w-4 h-4 text-emerald-600"> <span>${current.contOp1}</span></label>
-                                    <label class="flex items-center space-x-2.5 p-2 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="como" class="w-4 h-4 text-emerald-600"> <span>${current.contOp2}</span></label>
-                                    <label class="flex items-center space-x-2.5 p-2 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="como" class="w-4 h-4 text-emerald-600"> <span>${current.contOp3}</span></label>
-                                </div>
-                            </div>
-                            
-                            <div class="border-t pt-4 mt-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1">⏱️ ${current.planTitulo}</h3>
-                                <p class="text-[11px] text-slate-500 mb-3">${current.planDesc}</p>
-                                <div class="mb-3">
-                                    <span class="block text-xs font-bold text-slate-700 mb-1.5">${current.planMeta}</span>
-                                    <div class="flex gap-2">
-                                        <button type="button" onclick="setMeta('duda')" class="px-2.5 py-1 text-xs font-semibold rounded border transition-all ${meta === 'duda' ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' : 'bg-white text-slate-600'}">${current.planMetaDuda}</button>
-                                        <button type="button" onclick="setMeta('examen')" class="px-2.5 py-1 text-xs font-semibold rounded border transition-all ${meta === 'examen' ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' : 'bg-white text-slate-600'}">${current.planMetaExamen}</button>
-                                    </div>
-                                </div>
-                                ${meta === 'examen' ? `
-                                    <div class="mb-3 bg-white p-2 border border-slate-200 rounded text-xs">
-                                        <label class="block font-bold text-slate-700 mb-1">${current.planFechaExamen}</label>
-                                        <input type="date" class="border p-1 rounded border-slate-300 focus:outline-emerald-500">
-                                    </div>
-                                ` : ''}
-                                <div class="space-y-1.5 text-xs text-slate-700">
-                                    <span class="block font-bold text-slate-800 mb-0.5">${current.planDispo}</span>
-                                    <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="disp" checked class="text-emerald-600"> <span>${current.planDispOp1}</span></label>
-                                    <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="disp" class="text-emerald-600"> <span>${current.planDispOp2}</span></label>
-                                    <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="disp" class="text-emerald-600"> <span>${current.planDispOp3}</span></label>
-                                </div>
-                                <button type="button" onclick="calcularCrono()" class="w-full mt-3 bg-white hover:bg-slate-100 border border-slate-300 p-2 rounded-lg text-xs font-bold text-slate-700 shadow-sm">🔄 ${current.btnCronograma}</button>
-                                ${cronogramaCalculado ? `<div class="mt-2 bg-emerald-50 border border-emerald-200 p-2 rounded text-xs text-emerald-800 font-medium">✨ ${current.cronoAlerta}</div>` : ''}
-                            </div>
+<!-- ROADMAP -->
+<div id="screen-roadmap" class="screen">
+  <div class="topnav">
+    <div class="topnav-brand" onclick="goTo('landing')"><div class="nav-leaf"></div><span class="nav-name">Clara</span></div>
+    <div class="topnav-right"><button class="topnav-home" onclick="goTo('landing')" data-t="btn_home">← Inicio</button></div>
+  </div>
+  <div class="inner">
+    <div class="page-header"><button class="back-btn" onclick="goTo('contenidos')">←</button><span class="page-title" data-t="roadmap_title">Tu camino de aprendizaje</span></div>
+    <div class="roadmap-intro" id="roadmap-intro">—</div>
+    <div class="roadmap-steps" id="roadmap-steps"></div>
+    <div class="roadmap-actions">
+      <button class="btn btn-sage" id="btn-start-session" onclick="startSession()" data-t="btn_empezar">Empezar →</button>
+      <button class="btn btn-outline" onclick="goTo('contenidos')" data-t="btn_cambiar_tema">Cambiar tema</button>
+    </div>
+  </div>
+</div>
 
-                            <button onclick="procesarAccion('contenidos')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm transition-all shadow-sm mt-3">
-                                ${procesando ? current.procesandoTxt : current.btnComenzar}
-                            </button>
-                        </div>
+<!-- SESIÓN -->
+<div id="screen-session" class="screen">
+  <div class="topnav">
+    <div class="topnav-brand" onclick="goTo('landing')"><div class="nav-leaf"></div><span class="nav-name">Clara</span></div>
+    <div class="topnav-right"><button class="topnav-home" onclick="goTo('roadmap')" data-t="btn_ver_camino">Ver camino</button></div>
+  </div>
+  <div class="inner">
+    <div class="page-header"><button class="back-btn" onclick="goTo('roadmap')">←</button><span class="page-title" id="session-page-title">Sesión</span></div>
+    <div class="session-header"><div class="session-label" id="session-label">Sesión 1</div><div class="session-title" id="session-title">—</div></div>
+    <div class="content-block" id="session-content"></div>
+    <div class="exercises-title" data-t="ejercicios_title">Ejercicios de práctica</div>
+    <div id="exercises-container"></div>
+    <div class="session-footer">
+      <div style="font-size:14px;font-weight:500;color:var(--ink);font-family:-apple-system,sans-serif;" data-t="que_hacer">¿Qué querés hacer ahora?</div>
+      <div class="footer-btns">
+        <button class="btn btn-sage" id="btn-next" onclick="nextSession()">→</button>
+        <button class="btn btn-outline" onclick="goTo('roadmap')" data-t="btn_ver_camino_completo">Ver camino completo</button>
+        <button class="btn btn-outline" onclick="saveAndExit()" data-t="btn_guardar">Guardar y salir 💾</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-                        <div id="resultado-box"></div>
-                    </div>
-                `;
-            }
+<!-- DIDÁCTICA -->
+<div id="screen-didactica" class="screen">
+  <div class="topnav">
+    <div class="topnav-brand" onclick="goTo('landing')"><div class="nav-leaf"></div><span class="nav-name">Clara</span></div>
+    <div class="topnav-right">
+      <button class="lang-btn" onclick="toggleLang()" id="lang-toggle-d">🌐 English</button>
+      <button class="topnav-home" onclick="goTo('landing')" data-t="btn_home">← Inicio</button>
+    </div>
+  </div>
+  <div class="inner">
+    <div class="page-header"><button class="back-btn" onclick="goTo('landing')">←</button><span class="page-title" data-t="mode2_title">Didáctica de la Matemática</span></div>
 
-            // ==========================================
-            // VISTA SOY DOCENTE (REPARADA)
-            // ==========================================
-            if (section === 'didactica') {
-                html += `
-                    <div class="max-w-2xl mx-auto bg-white border border-slate-200 rounded-xl p-6 md:p-8 shadow-sm">
-                        <h2 class="text-xl font-bold text-slate-900 border-b pb-3 mb-5">🎓 ${current.didTitulo}</h2>
-                        
-                        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-5">
-                            <h4 class="font-bold text-amber-900 text-xs mb-0.5">${current.consejoTitulo}</h4>
-                            <p class="text-amber-950 text-xs leading-relaxed">${current.didConsejo}</p>
-                        </div>
+    <div class="section">
+      <label class="label" data-t="d_nivel_label">¿Para qué nivel?</label>
+      <div class="chips" data-g="d-nivel">
+        <div class="chip" onclick="pickNivel(this,'d-nivel','d-grado-wrap')" data-t="nivel_primaria">Primaria</div>
+        <div class="chip" onclick="pickNivel(this,'d-nivel','d-grado-wrap')" data-t="nivel_secundaria">Secundaria</div>
+        <div class="chip" onclick="pickNivel(this,'d-nivel','d-grado-wrap')" data-t="nivel_profesorado">Profesorado</div>
+        <div class="chip" onclick="pickNivel(this,'d-nivel','d-grado-wrap')" data-t="nivel_universitario">Universitario</div>
+      </div>
+      <div class="nivel-grado" id="d-grado-wrap">
+        <label class="sublabel" data-t="d_grado_label">¿Qué grado o año específicamente?</label>
+        <input type="text" class="field" id="d-grado" placeholder="Ej: 4° grado, 2° año, 1° año del profesorado..." />
+      </div>
+    </div>
 
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">📁 ${current.didPreguntaNivel}</label>
-                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-slate-900">
-                                    <option value="">${current.didNivelSeleccione}</option>
-                                    <option value="1">${current.didNivel1}</option>
-                                    <option value="2">${current.didNivel2}</option>
-                                    <option value="3">${current.didNivel3}</option>
-                                    <option value="4">${current.didNivel4}</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">⏳ ${current.didPreguntaMomento}</label>
-                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-slate-900">
-                                    <option value="1">${current.didMomento1}</option>
-                                    <option value="2">${current.didMomento2}</option>
-                                    <option value="3">${current.didMomento3}</option>
-                                    <option value="4">${current.didMomento4}</option>
-                                </select>
-                            </div>
+    <div class="section">
+      <label class="label" data-t="d_tipo_label">¿Qué necesitás?</label>
+      <div class="chips" data-g="d-tipo">
+        <div class="chip" onclick="pick(this,'d-tipo')" data-t="tipo_secuencia">Secuencia didáctica</div>
+        <div class="chip" onclick="pick(this,'d-tipo')" data-t="tipo_actividad">Actividad específica</div>
+        <div class="chip" onclick="pick(this,'d-tipo')" data-t="tipo_evaluacion">Evaluación</div>
+        <div class="chip" onclick="pick(this,'d-tipo')" data-t="tipo_repaso">Actividad de repaso</div>
+        <div class="chip" onclick="pick(this,'d-tipo')" data-t="tipo_cierre">Cierre de secuencia</div>
+        <div class="chip" onclick="pick(this,'d-tipo')" data-t="tipo_apertura">Situación de apertura</div>
+      </div>
+    </div>
 
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">✏️ ${current.didPreguntaTema}</label>
-                                <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm h-32 resize-none focus:outline-slate-900" placeholder="${current.didPlaceholderTema}"></textarea>
-                            </div>
+    <div class="section">
+      <label class="label" data-t="d_enfoque_label">¿Qué enfoque didáctico buscás?</label>
+      <div class="chips" data-g="d-enfoque">
+        <div class="chip" onclick="pick(this,'d-enfoque')" data-t="enf_constructivista">Constructivista (Brousseau, Piaget, Vygotsky)</div>
+        <div class="chip" onclick="pick(this,'d-enfoque')" data-t="enf_realista">Realista (RME — Freudenthal)</div>
+        <div class="chip" onclick="pick(this,'d-enfoque')" data-t="enf_tradicional">Tradicional / Conductista</div>
+        <div class="chip" onclick="pick(this,'d-enfoque')" data-t="enf_polya">Resolución de problemas (Polya)</div>
+        <div class="chip" onclick="pick(this,'d-enfoque')" data-t="enf_investigacion">Investigación y descubrimiento</div>
+        <div class="chip" onclick="pick(this,'d-enfoque')" data-t="enf_otro">Otro</div>
+      </div>
+    </div>
 
-                            <div class="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3">
-                                <label class="block text-xs font-bold text-slate-700 mb-1.5">${current.adjuntarLabel}</label>
-                                <input type="file" class="text-xs text-slate-600 block w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-800 hover:file:bg-slate-300 cursor-pointer">
-                            </div>
+    <div class="section">
+      <label class="label" data-t="d_desc_label">Describí lo que necesitás</label>
+      <span class="sublabel" data-t="d_desc_sub">Cuanto más detalle, mejor. Incluí el tema, los contenidos previos del grupo, el contexto.</span>
+      <textarea class="field" id="d-desc" style="min-height:130px;" placeholder="Ej: Necesito una secuencia para introducir la multiplicación en 3° grado. Los chicos ya saben sumar y conocen las tablas del 2 y del 5. El grupo es heterogéneo, hay varios chicos con dificultades..."></textarea>
+    </div>
 
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">👥 ${current.didPreguntaDiversidad}</label>
-                                <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm h-20 resize-none focus:outline-slate-900" placeholder="Ej: Ritmos de aprendizaje diversos, configuraciones de apoyo visual específicas..."></textarea>
-                            </div>
+    <div class="section">
+      <label class="label" data-t="d_tiempo_label">¿Cuánto tiempo tenés para trabajar este tema?</label>
+      <div class="chips" data-g="d-tiempo">
+        <div class="chip" onclick="pick(this,'d-tiempo')" data-t="d_tiempo_1">1 clase</div>
+        <div class="chip" onclick="pick(this,'d-tiempo')" data-t="d_tiempo_2">2 a 3 clases</div>
+        <div class="chip" onclick="pick(this,'d-tiempo')" data-t="d_tiempo_3">Una semana</div>
+        <div class="chip" onclick="pick(this,'d-tiempo')" data-t="d_tiempo_4">2 a 3 semanas</div>
+        <div class="chip" onclick="pick(this,'d-tiempo')" data-t="d_tiempo_5">Un mes o más</div>
+      </div>
+    </div>
 
-                            <button onclick="procesarAccion('didactica')" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg text-sm transition-all shadow-sm mt-3">
-                                ${procesando ? current.procesandoTxt : current.btnGenerar}
-                            </button>
-                        </div>
+    <div class="section">
+      <label class="label" data-t="d_diversificar_label">¿Necesitás diversificar según las necesidades del grupo?</label>
+      <div class="chips" data-g="d-diversificar">
+        <div class="chip" onclick="pick(this,'d-diversificar')" data-t="div_no">No, es un grupo homogéneo</div>
+        <div class="chip" onclick="pick(this,'d-diversificar')" data-t="div_niveles">Sí, hay diferentes niveles</div>
+        <div class="chip" onclick="pick(this,'d-diversificar')" data-t="div_nee">Sí, hay alumnos con NEE</div>
+        <div class="chip" onclick="pick(this,'d-diversificar')" data-t="div_ambos">Sí, niveles diferentes y NEE</div>
+      </div>
+    </div>
 
-                        <div id="resultado-box"></div>
-                    </div>
-                `;
-            }
+    <div class="section">
+      <label class="label" data-t="d_pdf_label">¿Tenés un programa o material orientador? <span style="color:var(--ink-light);font-weight:400;" data-t="opcional">(opcional)</span></label>
+      <div class="file-drop" onclick="document.getElementById('upload-didactica').click()">
+        <input type="file" id="upload-didactica" class="hidden-upload" accept=".pdf,.docx,.doc" onchange="loadFile(this,'didactica')" />
+        <p style="font-size:14px;color:var(--ink-mid);font-family:-apple-system,sans-serif;" data-t="file_select">Hacé clic para seleccionar</p>
+        <p style="font-size:12px;color:var(--ink-light);font-family:-apple-system,sans-serif;margin-top:4px;">PDF o Word (.docx)</p>
+      </div>
+      <div class="file-name" id="fname-didactica"><span id="fname-didactica-text"></span></div>
+    </div>
 
-            html += `</main>`;
-            document.getElementById('app').innerHTML = html;
-            
-            if (resultadoSimulado) {
-                document.getElementById('resultado-box').innerHTML = resultadoSimulado;
-            }
-        }
+    <div class="section">
+      <label class="label" data-t="d_extra_label">¿Algo más que Clara deba saber? <span style="color:var(--ink-light);font-weight:400;" data-t="opcional">(opcional)</span></label>
+      <textarea class="field" id="d-extra" placeholder="Ej: Es un grupo con muchos chicos que tienen miedo a equivocarse, trabajamos con materiales concretos, el aula tiene pizarrón pero no proyector..."></textarea>
+    </div>
 
-        // Controladores lógicos de navegación y estado
-        function navigate(sec) { section = sec; cronogramaCalculado = false; resultadoSimulado = null; render(); }
-        function setLanguage(l) { lang = l; render(); }
-        function setMeta(m) { meta = m; render(); }
-        function calcularCrono() { cronogramaCalculado = true; render(); }
+    <button class="btn btn-sage btn-full" onclick="generateGuia()" data-t="btn_generar_guia">Generar propuesta didáctica ✨</button>
+  </div>
+</div>
 
-        // Simulación activa de las respuestas interactivas de Clara
-        function procesarAccion(tipo) {
-            procesando = true;
-            render();
-            
-            setTimeout(() => {
-                procesando = false;
-                const tit = t[lang].resultadoTitulo;
-                if (tipo === 'contenidos') {
-                    resultadoSimulado = `
-                        <div class="mt-6 bg-emerald-50 border border-emerald-200 rounded-xl p-5 animate-fadeIn">
-                            <h3 class="text-sm font-bold text-emerald-900 mb-2">${tit}</h3>
-                            <p class="text-xs text-emerald-950 mb-3"><strong>Clara responde:</strong> Basado en tu nivel académico y el tiempo diario configurado, acá tenés la propuesta explicativa y visual personalizada para resolver tu consulta:</p>
-                            <div class="bg-white p-3 rounded-lg border border-emerald-100 text-xs text-slate-600 space-y-1">
-                                <p>• <strong>Paso 1:</strong> Representación gráfica concreta utilizando los soportes visuales seleccionados.</p>
-                                <p>• <strong>Paso 2:</strong> Desafío lúdico integrador adaptado a tu ritmo.</p>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    resultadoSimulado = `
-                        <div class="mt-6 bg-slate-100 border border-slate-300 rounded-xl p-5 animate-fadeIn">
-                            <h3 class="text-sm font-bold text-slate-900 mb-2">${tit}</h3>
-                            <p class="text-xs text-slate-950 mb-3"><strong>Clara responde:</strong> Analicé el contenido matemático y las características grupales descritas. Te propongo este estrategia de intervención constructivista:</p>
-                            <div class="bg-white p-3 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-2">
-                                <p><strong>Fase de Exploración:</strong> Diseño de un problema abierto para la confrontación de procedimientos matemáticos autónomos.</p>
-                                <p><strong>Atención a la Diversidad:</strong> Consignas diferenciadas y andamiajes específicos basados en los comentarios de tu grupo.</p>
-                            </div>
-                        </div>
-                    `;
-                }
-                render();
-            }, 1000);
-        }
+<!-- GUÍA RESULTADO -->
+<div id="screen-guia" class="screen">
+  <div class="topnav">
+    <div class="topnav-brand" onclick="goTo('landing')"><div class="nav-leaf"></div><span class="nav-name">Clara</span></div>
+    <div class="topnav-right"><button class="topnav-home" onclick="goTo('landing')" data-t="btn_home">← Inicio</button></div>
+  </div>
+  <div class="inner">
+    <div class="page-header"><button class="back-btn" onclick="goTo('didactica')">←</button><span class="page-title" data-t="guia_title">Propuesta didáctica</span></div>
+    <div class="guia-header"><div class="guia-titulo" id="guia-titulo">—</div><div class="guia-intro" id="guia-intro">—</div></div>
+    <div id="guia-container"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:1rem;">
+      <button class="btn btn-sage" onclick="printGuia()" data-t="btn_imprimir">📄 Imprimir / PDF</button>
+      <button class="btn btn-outline" onclick="goTo('didactica')" data-t="btn_nueva_guia">Generar otra propuesta</button>
+    </div>
+    <p class="print-hint" data-t="print_hint">Al imprimir, las respuestas del docente no aparecen.</p>
+  </div>
+</div>
 
-        render();
-    </script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const PASS = 'app2026';
+const API_URL = 'https://clara-api.danielabalonas.workers.dev';
+
+// ── TRANSLATIONS ──
+const T = {
+  es: {
+    welcome: 'Bienvenida', tip_title: 'Antes de empezar', tip_intro: 'Lo que Clara te proponga depende de cómo le explicás lo que necesitás. Cuanto más detalle, mejor la propuesta.',
+    tip_learn_title: 'Si querés aprender:', tip_learn_1: 'Contale tu nivel, qué ya sabés y para qué lo necesitás', tip_learn_2: 'Subí tu programa o material si tenés', tip_learn_3: 'Indicá cuánto tiempo tenés disponible',
+    tip_teach_title: 'Si sos docente:', tip_teach_1: 'Especificá el nivel, grado/año y lo que necesitás', tip_teach_2: 'Subí el programa o material orientador', tip_teach_3: 'Describí el contexto del grupo',
+    tip_footer: 'Si el resultado no te convence, revisá cómo formulaste el pedido 🌱',
+    pass_sub: 'Ingresá la contraseña de acceso de tu membresía.', pass_error: 'Contraseña incorrecta.', btn_enter: 'Entrar', membership: 'Parte de la membresía · Matemática con Sentido',
+    hero_title: 'Matemática,', hero_sub: 'Tu compañera de aprendizaje matemático con IA. Elegí cómo querés trabajar hoy.',
+    resume_title: 'Tenés un aprendizaje en curso', btn_resume: 'Continuar donde dejé →',
+    mode1_title: 'Contenidos Matemáticos', mode1_desc: 'Aprendé o repasá matemática con un camino personalizado',
+    mode2_title: 'Didáctica de la Matemática', mode2_desc: 'Generá secuencias y actividades para tus alumnos',
+    feat1: 'Camino\npersonalizado', feat2: 'Todos los\nniveles', feat3: 'Ejercicios con\nrespuestas', feat4: 'Guarda tu\nprogreso',
+    btn_home: '← Inicio', btn_ver_camino: 'Ver camino', btn_ver_camino_completo: 'Ver camino completo', btn_guardar: 'Guardar y salir 💾',
+    c_nivel_label: '¿Cuál es tu nivel educativo?', c_grado_label: '¿Qué grado, año o curso específicamente?',
+    c_tema_label: '¿Qué querés aprender o repasar?', c_tema_sub: 'Describí en detalle — cuanto más específico, mejor la propuesta.',
+    c_enfoque_label: '¿Qué tipo de aprendizaje buscás?', c_proposito_label: '¿Para qué lo necesitás?',
+    c_tiempo_label: '¿Cuánto tiempo tenés disponible?', c_pdf_label: '¿Tenés un programa, guía o material?', c_pdf_sub: 'Si subís el programa de tu materia, Clara puede adaptar el camino exactamente.',
+    c_extra_label: '¿Algo más que Clara deba saber?', btn_generar_camino: 'Que Clara arme mi camino ✨',
+    nivel_primaria: 'Primaria', nivel_secundaria: 'Secundaria', nivel_terciario: 'Terciario', nivel_universitario: 'Universitario', nivel_profesorado: 'Profesorado',
+    enfoque_conceptual: 'Entender la lógica y el por qué', enfoque_practico: 'Práctica y ejercicios', enfoque_ambos: 'Los dos', enfoque_examen: 'Preparar un examen', enfoque_enseñar: 'Para poder enseñarlo',
+    prop_examen: 'Para un examen o evaluación', prop_trabajo: 'Para aplicarlo en mi trabajo', prop_curiosidad: 'Por curiosidad o interés propio', prop_enseñar: 'Para enseñarle a otros', prop_acompanar: 'Para acompañar a un niño o joven',
+    tiempo_poco: 'Poco — menos de 1 hora por semana', tiempo_medio: 'Moderado — 1 a 3 horas por semana', tiempo_mucho: 'Bastante — más de 3 horas por semana', tiempo_intensivo: 'Intensivo — tengo fecha límite',
+    roadmap_title: 'Tu camino de aprendizaje', btn_empezar: 'Empezar →', btn_cambiar_tema: 'Cambiar tema',
+    ejercicios_title: 'Ejercicios de práctica', que_hacer: '¿Qué querés hacer ahora?',
+    d_nivel_label: '¿Para qué nivel?', d_grado_label: '¿Qué grado o año específicamente?',
+    d_tipo_label: '¿Qué necesitás?', d_enfoque_label: '¿Qué enfoque didáctico buscás?',
+    d_desc_label: 'Describí lo que necesitás', d_desc_sub: 'Cuanto más detalle, mejor. Incluí el tema, los contenidos previos del grupo, el contexto.',
+    d_tiempo_label: '¿Cuánto tiempo tenés para trabajar este tema?', d_diversificar_label: '¿Necesitás diversificar según las necesidades del grupo?',
+    d_pdf_label: '¿Tenés un programa o material orientador?', d_extra_label: '¿Algo más que Clara deba saber?',
+    btn_generar_guia: 'Generar propuesta didáctica ✨', guia_title: 'Propuesta didáctica',
+    btn_imprimir: '📄 Imprimir / PDF', btn_nueva_guia: 'Generar otra propuesta', print_hint: 'Al imprimir, las respuestas del docente no aparecen.',
+    tipo_secuencia: 'Secuencia didáctica', tipo_actividad: 'Actividad específica', tipo_evaluacion: 'Evaluación', tipo_repaso: 'Actividad de repaso', tipo_cierre: 'Cierre de secuencia', tipo_apertura: 'Situación de apertura',
+    enf_constructivista: 'Constructivista (Brousseau, Piaget, Vygotsky)', enf_realista: 'Realista (RME — Freudenthal)', enf_tradicional: 'Tradicional / Conductista', enf_polya: 'Resolución de problemas (Polya)', enf_investigacion: 'Investigación y descubrimiento', enf_otro: 'Otro',
+    d_tiempo_1: '1 clase', d_tiempo_2: '2 a 3 clases', d_tiempo_3: 'Una semana', d_tiempo_4: '2 a 3 semanas', d_tiempo_5: 'Un mes o más',
+    div_no: 'No, es un grupo homogéneo', div_niveles: 'Sí, hay diferentes niveles', div_nee: 'Sí, hay alumnos con NEE', div_ambos: 'Sí, niveles diferentes y NEE',
+    file_select: 'Hacé clic para seleccionar', opcional: '(opcional)', loading_sub: 'Esto puede tardar unos segundos.'
+  },
+  en: {
+    welcome: 'Welcome', tip_title: 'Before you start', tip_intro: "What Clara proposes depends on how clearly you explain what you need. The more detail, the better the proposal.",
+    tip_learn_title: 'If you want to learn:', tip_learn_1: 'Tell Clara your level, what you already know, and why you need it', tip_learn_2: 'Upload your syllabus or materials if you have them', tip_learn_3: 'Indicate how much time you have available',
+    tip_teach_title: 'If you are a teacher:', tip_teach_1: 'Specify the level, grade/year, and what you need', tip_teach_2: 'Upload the curriculum or guiding material', tip_teach_3: 'Describe the group context',
+    tip_footer: "If the result doesn't satisfy you, review how you phrased your request 🌱",
+    pass_sub: 'Enter your membership access password.', pass_error: 'Incorrect password.', btn_enter: 'Enter', membership: 'Part of the membership · Mathematics with Meaning',
+    hero_title: 'Mathematics,', hero_sub: 'Your AI-powered math learning companion. Choose how you want to work today.',
+    resume_title: 'You have a learning in progress', btn_resume: 'Continue where I left off →',
+    mode1_title: 'Math Content', mode1_desc: 'Learn or review math with a personalized path',
+    mode2_title: 'Math Didactics', mode2_desc: 'Generate sequences and activities for your students',
+    feat1: 'Personalized\npath', feat2: 'All\nlevels', feat3: 'Exercises with\nanswers', feat4: 'Saves your\nprogress',
+    btn_home: '← Home', btn_ver_camino: 'View path', btn_ver_camino_completo: 'View full path', btn_guardar: 'Save and exit 💾',
+    c_nivel_label: 'What is your education level?', c_grado_label: 'Which specific grade, year or course?',
+    c_tema_label: 'What do you want to learn or review?', c_tema_sub: 'Describe in detail — the more specific, the better the proposal.',
+    c_enfoque_label: 'What type of learning are you looking for?', c_proposito_label: 'Why do you need it?',
+    c_tiempo_label: 'How much time do you have available?', c_pdf_label: 'Do you have a syllabus, guide or material?', c_pdf_sub: 'If you upload your course syllabus, Clara can tailor the path exactly to your needs.',
+    c_extra_label: 'Anything else Clara should know?', btn_generar_camino: 'Let Clara build my path ✨',
+    nivel_primaria: 'Primary school', nivel_secundaria: 'High school', nivel_terciario: 'Tertiary', nivel_universitario: 'University', nivel_profesorado: 'Teacher training',
+    enfoque_conceptual: 'Understand the logic and the why', enfoque_practico: 'Practice and exercises', enfoque_ambos: 'Both', enfoque_examen: 'Prepare for an exam', enfoque_enseñar: 'To be able to teach it',
+    prop_examen: 'For an exam or assessment', prop_trabajo: 'To apply it at work', prop_curiosidad: 'Out of curiosity or personal interest', prop_enseñar: 'To teach others', prop_acompanar: 'To support a child or young person',
+    tiempo_poco: 'Little — less than 1 hour per week', tiempo_medio: 'Moderate — 1 to 3 hours per week', tiempo_mucho: 'Quite a bit — more than 3 hours per week', tiempo_intensivo: 'Intensive — I have a deadline',
+    roadmap_title: 'Your learning path', btn_empezar: 'Start →', btn_cambiar_tema: 'Change topic',
+    ejercicios_title: 'Practice exercises', que_hacer: 'What do you want to do now?',
+    d_nivel_label: 'For which level?', d_grado_label: 'Which specific grade or year?',
+    d_tipo_label: 'What do you need?', d_enfoque_label: 'What didactic approach are you looking for?',
+    d_desc_label: 'Describe what you need', d_desc_sub: 'The more detail, the better. Include the topic, prior knowledge of the group, and context.',
+    d_tiempo_label: 'How much time do you have to work on this topic?', d_diversificar_label: 'Do you need to differentiate based on student needs?',
+    d_pdf_label: 'Do you have a curriculum or guiding material?', d_extra_label: 'Anything else Clara should know?',
+    btn_generar_guia: 'Generate teaching proposal ✨', guia_title: 'Teaching proposal',
+    btn_imprimir: '📄 Print / PDF', btn_nueva_guia: 'Generate another proposal', print_hint: "When printing, teacher answers don't appear.",
+    tipo_secuencia: 'Teaching sequence', tipo_actividad: 'Specific activity', tipo_evaluacion: 'Assessment', tipo_repaso: 'Review activity', tipo_cierre: 'Sequence closure', tipo_apertura: 'Opening situation',
+    enf_constructivista: 'Constructivist (Brousseau, Piaget, Vygotsky)', enf_realista: 'Realistic (RME — Freudenthal)', enf_tradicional: 'Traditional / Behaviorist', enf_polya: 'Problem solving (Polya)', enf_investigacion: 'Inquiry and discovery', enf_otro: 'Other',
+    d_tiempo_1: '1 class', d_tiempo_2: '2 to 3 classes', d_tiempo_3: 'One week', d_tiempo_4: '2 to 3 weeks', d_tiempo_5: 'One month or more',
+    div_no: 'No, it is a homogeneous group', div_niveles: 'Yes, there are different levels', div_nee: 'Yes, there are students with special needs', div_ambos: 'Yes, different levels and special needs',
+    file_select: 'Click to select', opcional: '(optional)', loading_sub: 'This may take a few seconds.'
+  }
+};
+
+let lang = navigator.language.startsWith('en') ? 'en' : 'es';
+let state = { fileText: { contenidos: '', didactica: '' }, profile: {}, roadmap: [], currentStep: 0 };
+
+function applyLang() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    if (T[lang][key]) el.textContent = T[lang][key];
+  });
+  document.querySelectorAll('[id^="lang-toggle"]').forEach(btn => {
+    btn.textContent = lang === 'es' ? '🌐 English' : '🌐 Español';
+  });
+}
+
+function toggleLang() {
+  lang = lang === 'es' ? 'en' : 'es';
+  applyLang();
+}
+
+// ── AUTH ──
+function checkPass() {
+  var v = document.getElementById('password-input').value.trim();
+  if (v === PASS) { document.getElementById('screen-password').style.display = 'none'; goTo('landing'); checkResume(); }
+  else { document.getElementById('pass-error').style.display = 'block'; }
+}
+
+// ── NAV ──
+function goTo(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── CHIPS ──
+function pick(el, group) {
+  document.querySelectorAll('[data-g="'+group+'"] .chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  state.profile[group] = el.textContent.trim();
+}
+
+function pickNivel(el, group, wrapId) {
+  pick(el, group);
+  document.getElementById(wrapId).classList.add('visible');
+}
+
+// ── FILE LOADING ──
+async function loadFile(input, target) {
+  const file = input.files[0];
+  if (!file) return;
+  const nameEl = 'fname-' + target;
+  const nameTextEl = 'fname-' + target + '-text';
+  document.getElementById(nameTextEl).textContent = '📄 ' + file.name + ' (procesando...)';
+  document.getElementById(nameEl).classList.add('visible');
+  try {
+    let text = '';
+    if (file.name.endsWith('.pdf')) {
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(item => item.str).join(' ') + '\n';
+      }
+    } else {
+      const buf = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer: buf });
+      text = result.value;
+    }
+    state.fileText[target] = text.slice(0, 6000);
+    document.getElementById(nameTextEl).textContent = '📄 ' + file.name + ' ✓';
+  } catch(e) {
+    document.getElementById(nameTextEl).textContent = '⚠️ Error al leer el archivo.';
+  }
+}
+
+// ── LOADING ──
+const loadMsgs = {
+  es: ['Clara está analizando tu perfil...', 'Preparando tu camino...', 'Diseñando las sesiones...', 'Casi listo...'],
+  en: ['Clara is analyzing your profile...', 'Preparing your path...', 'Designing your sessions...', 'Almost ready...']
+};
+let loadInt;
+function startLoad(msg) {
+  let i = 0;
+  const msgs = loadMsgs[lang];
+  document.getElementById('loading-text').textContent = msg || msgs[0];
+  loadInt = setInterval(() => { i=(i+1)%msgs.length; document.getElementById('loading-text').textContent = msgs[i]; }, 3000);
+  goTo('loading');
+}
+function stopLoad() { clearInterval(loadInt); }
+
+// ── GENERATE ROADMAP ──
+async function generateRoadmap() {
+  const tema = document.getElementById('c-tema').value.trim();
+  if (!tema) { alert(lang==='es'?'Describí el tema que querés aprender.':'Describe the topic you want to learn.'); return; }
+
+  const nivel = state.profile['c-nivel'] || '';
+  const grado = document.getElementById('c-grado').value || '';
+  const enfoque = state.profile['c-enfoque'] || '';
+  const proposito = state.profile['c-proposito'] || '';
+  const tiempo = state.profile['c-tiempo'] || '';
+  const extra = document.getElementById('c-extra').value || '';
+  const pdf = state.fileText.contenidos || '';
+
+  startLoad();
+
+  const prompt = `You are Clara, a personalized math learning tutor. Always respond in ${lang === 'es' ? 'Spanish (Argentine)' : 'English'} with a warm and professional tone.
+
+Student profile:
+- Education level: ${nivel} ${grado}
+- Topic to learn: ${tema}
+- Learning approach: ${enfoque}
+- Purpose: ${proposito}
+- Available time: ${tiempo}
+- Additional notes: ${extra}
+${pdf ? '- Curriculum/material provided: ' + pdf.slice(0,2000) : ''}
+
+Analyze the topic and create a personalized learning path with the right number of sessions for the complexity of the topic.
+
+IMPORTANT: Respond ONLY with valid JSON, no backticks:
+{"intro":"paragraph introducing the path, addressed directly to the student","steps":[{"title":"brief session title","description":"what will be learned","duration":"estimated time"}]}`;
+
+  try {
+    const res = await callAI(prompt, 1500);
+    let data;
+    try { data = JSON.parse(res.replace(/```json|```/g,'').trim()); }
+    catch(e) { const m = res.match(/\{[\s\S]*\}/); if(m) data = JSON.parse(m[0]); else throw new Error('Parse error'); }
+    state.roadmap = data.steps.map((s,i) => ({...s,index:i,done:false,current:i===0}));
+    state.currentStep = 0;
+    saveProgress();
+    stopLoad();
+    renderRoadmap(data.intro);
+    goTo('roadmap');
+  } catch(e) { stopLoad(); alert('Error: '+e.message); goTo('contenidos'); }
+}
+
+function renderRoadmap(intro) {
+  document.getElementById('roadmap-intro').textContent = intro || '';
+  const c = document.getElementById('roadmap-steps');
+  c.innerHTML = '';
+  state.roadmap.forEach((step, i) => {
+    const d = document.createElement('div');
+    d.className = 'roadmap-step' + (step.done?' done':'') + (step.current&&!step.done?' current':'');
+    d.onclick = () => { state.currentStep = i; state.roadmap.forEach((s,idx)=>s.current=idx===i); renderRoadmap(document.getElementById('roadmap-intro').textContent); };
+    d.innerHTML = `<div class="step-num">${i+1}</div><div class="step-info"><div class="step-name">${esc(step.title)}</div><div class="step-desc">${esc(step.description)} · ${esc(step.duration)}</div></div>${step.done?`<span class="step-badge-done">✓</span>`:''}${step.current&&!step.done?`<span class="step-badge-cur">${lang==='es'?'En curso':'In progress'}</span>`:''}`;
+    c.appendChild(d);
+  });
+  const next = state.roadmap.find(s=>!s.done);
+  document.getElementById('btn-start-session').textContent = next ? (lang==='es'?'Empezar: ':'Start: ') + next.title + ' →' : (lang==='es'?'🎉 ¡Completado!':'🎉 Completed!');
+}
+
+async function startSession() {
+  const step = state.roadmap[state.currentStep];
+  if (!step) return;
+  startLoad();
+
+  const nivel = state.profile['c-nivel'] || '';
+  const grado = document.getElementById('c-grado') ? document.getElementById('c-grado').value : '';
+  const enfoque = state.profile['c-enfoque'] || '';
+
+  const prompt = `You are Clara, a personalized math learning tutor. Respond in ${lang === 'es' ? 'Spanish (Argentine)' : 'English'} with a warm and professional tone.
+
+PEDAGOGICAL APPROACH — CONSTRUCTIVIST MATHEMATICS (Brousseau, Sadovsky):
+- ALWAYS start with a problem situation or question that activates prior knowledge
+- Do not give the answer directly — guide with questions that make the student think
+- Connect with real, everyday situations
+- Explain the content from the inside: its logic, structure, why it works this way
+- Minimum 500 words, deep and developed explanation
+- Mathematical teacher interventions to include: "How did you think about it?", "Is there another way?", "Does that result make sense?", "What would happen if..."
+
+Student: ${nivel} ${grado} — approach: ${enfoque}
+General topic: ${document.getElementById('c-tema') ? document.getElementById('c-tema').value : ''}
+Session ${state.currentStep+1} of ${state.roadmap.length}: ${step.title}
+Description: ${step.description}
+${state.currentStep>0 ? 'Previous sessions: '+state.roadmap.slice(0,state.currentStep).map(s=>s.title).join(', ') : ''}
+
+IMPORTANT: JSON must be valid. Use single quotes inside values, not double quotes. No line breaks inside JSON values.
+Respond ONLY with valid JSON, no backticks:
+{"content":"complete explanation in markdown with ### subtitles, minimum 500 words","exercises":[{"question":"exercise","answer":"complete correct answer","feedback":"constructivist feedback that opens new questions"}]}
+Include exactly 4 exercises from easier to harder.`;
+
+  try {
+    const res = await callAI(prompt, 3500);
+    let data;
+    try { data = JSON.parse(res.replace(/```json|```/g,'').trim()); }
+    catch(e) { const m = res.match(/\{[\s\S]*\}/); if(m) { try { data = JSON.parse(m[0]); } catch(e2) { throw new Error(lang==='es'?'Intentá de nuevo.':'Please try again.'); } } else throw new Error(lang==='es'?'Intentá de nuevo.':'Please try again.'); }
+    stopLoad();
+    renderSession(step, data);
+    goTo('session');
+  } catch(e) { stopLoad(); alert('Error: '+e.message); goTo('roadmap'); }
+}
+
+function renderSession(step, data) {
+  document.getElementById('session-page-title').textContent = (lang==='es'?'Sesión ':'Session ') + (state.currentStep+1);
+  document.getElementById('session-label').textContent = (lang==='es'?'Sesión ':'Session ') + (state.currentStep+1) + ' / ' + state.roadmap.length;
+  document.getElementById('session-title').textContent = step.title;
+  document.getElementById('session-content').innerHTML = formatMd(data.content || '');
+  const c = document.getElementById('exercises-container');
+  c.innerHTML = '';
+  (data.exercises||[]).forEach((ex,i) => {
+    const d = document.createElement('div');
+    d.className = 'exercise-card';
+    const feedLabel = lang==='es'?'Ver retroalimentación':'See feedback';
+    const ansLabel = lang==='es'?'Ver respuesta correcta':'See correct answer';
+    d.innerHTML = `<div class="ex-num">${lang==='es'?'Ejercicio':'Exercise'} ${i+1}</div><div class="ex-question">${esc(ex.question)}</div><textarea class="ex-textarea" placeholder="${lang==='es'?'Escribí tu respuesta acá...':'Write your answer here...'}"></textarea><div class="ex-btns"><button class="btn btn-outline" style="font-size:12px;padding:7px 14px;" onclick="showEl('ex-feed-${i}')">${feedLabel}</button><button class="btn btn-warm" style="font-size:12px;padding:7px 14px;" onclick="showEl('ex-ans-${i}')">${ansLabel}</button></div><div class="ex-feedback" id="ex-feed-${i}">${esc(ex.feedback)}</div><div class="ex-correct" id="ex-ans-${i}"><strong>${lang==='es'?'Respuesta:':'Answer:'}</strong> ${esc(ex.answer)}</div>`;
+    c.appendChild(d);
+  });
+  const next = state.roadmap[state.currentStep+1];
+  document.getElementById('btn-next').textContent = next ? (lang==='es'?'Continuar: ':'Continue: ') + next.title + ' →' : (lang==='es'?'🎉 ¡Completado!':'🎉 Completed!');
+}
+
+function showEl(id) { document.getElementById(id).classList.add('visible'); }
+
+function nextSession() {
+  state.roadmap[state.currentStep].done = true;
+  state.roadmap[state.currentStep].current = false;
+  const next = state.currentStep + 1;
+  if (next < state.roadmap.length) { state.roadmap[next].current = true; state.currentStep = next; saveProgress(); startSession(); }
+  else { saveProgress(); alert(lang==='es'?'🎉 ¡Completaste todo el camino! Felicitaciones.':'🎉 You completed the entire path! Congratulations.'); goTo('roadmap'); }
+}
+
+function saveAndExit() { saveProgress(); alert(lang==='es'?'✓ Progreso guardado.':'✓ Progress saved.'); goTo('landing'); }
+
+function saveProgress() {
+  try { localStorage.setItem('clara_math_prog', JSON.stringify({ roadmap: state.roadmap, currentStep: state.currentStep, savedAt: new Date().toLocaleDateString() })); } catch(e) {}
+}
+
+function checkResume() {
+  try {
+    const s = JSON.parse(localStorage.getItem('clara_math_prog'));
+    if (s && s.roadmap && s.roadmap.some(x=>!x.done)) {
+      const next = s.roadmap.find(x=>!x.done);
+      document.getElementById('resume-text').textContent = (lang==='es'?'Próxima sesión: ':'Next session: ') + next.title + ' (' + s.savedAt + ')';
+      document.getElementById('resume-banner').classList.add('visible');
+    }
+  } catch(e) {}
+}
+
+function resumeLearning() {
+  try {
+    const s = JSON.parse(localStorage.getItem('clara_math_prog'));
+    if (s) { state.roadmap = s.roadmap; state.currentStep = Math.max(0, s.roadmap.findIndex(x=>!x.done)); renderRoadmap(lang==='es'?'Continuando tu camino guardado.':'Continuing your saved path.'); goTo('roadmap'); }
+  } catch(e) {}
+}
+
+// ── DIDÁCTICA ──
+async function generateGuia() {
+  const desc = document.getElementById('d-desc').value.trim();
+  if (!desc) { alert(lang==='es'?'Describí lo que necesitás.':'Describe what you need.'); return; }
+
+  const nivel = state.profile['d-nivel'] || '';
+  const grado = document.getElementById('d-grado').value || '';
+  const tipo = state.profile['d-tipo'] || '';
+  const enfoque = state.profile['d-enfoque'] || '';
+  const tiempo = state.profile['d-tiempo'] || '';
+  const diversificar = state.profile['d-diversificar'] || '';
+  const extra = document.getElementById('d-extra').value || '';
+  const pdf = state.fileText.didactica || '';
+
+  startLoad(lang==='es'?'Generando tu propuesta didáctica...':'Generating your teaching proposal...');
+
+  const enfoqueInstrucciones = enfoque.toLowerCase().includes('constructiv') || enfoque.toLowerCase().includes('brousseau') ? `
+CONSTRUCTIVIST APPROACH (Brousseau, Sadovsky, Quaranta):
+- Activities must start from real, meaningful problem situations
+- The student must be able to think before the teacher intervenes
+- Include at least 2 explicit moments of teacher intervention WITHOUT giving the answer: "How did you think about it?", "Is there another way?", "Does that result make sense?", "Let's re-read the problem", "What data do we have?"
+- Promote comparison of strategies and validation between students
+- The teacher does NOT confirm or deny immediately — first returns the question to the group
+- Mathematical teacher interventions are mandatory in every sequence` :
+  enfoque.toLowerCase().includes('realistic') || enfoque.toLowerCase().includes('freudenthal') ? `
+REALISTIC MATHEMATICS EDUCATION (RME — Freudenthal):
+- Start from realistic contexts that are meaningful to students
+- Allow informal strategies before formalizing
+- Guided reinvention — let students discover the math
+- Connect different mathematical representations` :
+  enfoque.toLowerCase().includes('polya') ? `
+PROBLEM SOLVING APPROACH (Polya):
+- Understand the problem → Devise a plan → Carry out the plan → Look back
+- Explicit metacognitive questions at each stage
+- Value the process as much as the result` :
+  `Use the ${enfoque} approach consistently throughout all activities.`;
+
+  const prompt = `You are Clara, a mathematics education specialist. Respond in ${lang === 'es' ? 'Spanish (Argentine)' : 'English'} with a warm and professional tone.
+
+${enfoqueInstrucciones}
+
+Teacher request:
+- Level: ${nivel} ${grado}
+- What they need: ${tipo}
+- Didactic approach: ${enfoque}
+- Description: ${desc}
+- Available time: ${tiempo}
+- Differentiation needed: ${diversificar}
+- Additional notes: ${extra}
+${pdf ? '- Curriculum/material: ' + pdf.slice(0,2000) : ''}
+
+Generate a DIDACTIC SEQUENCE — not isolated activities but a coherent path where each activity builds on the previous one.
+
+RULES FOR ACTIVITIES:
+- Each activity must clearly indicate what the TEACHER does and what the STUDENT does
+- Format: "→ ${lang==='es'?'Docente':'Teacher'}: [what the teacher does/says, including the material if it is text]" then "→ ${lang==='es'?'Alumno':'Student'}: [clear, complete instruction for the student]"
+- When the activity requires a text, fragment, problem, or written material: WRITE IT YOURSELF adapted to the level
+- Do NOT say "the teacher will look for a text about..." — write the text directly
+- Only delegate to the teacher what genuinely cannot be generated as text
+${diversificar && !diversificar.toLowerCase().includes('no') ? '- Include differentiated versions of key activities for different levels/needs' : ''}
+
+IMPORTANT: JSON must be valid. Use single quotes inside values. No line breaks inside JSON string values.
+Respond ONLY with valid JSON, no backticks:
+{"titulo":"sequence title","introduccion":"description for the teacher: what path this sequence proposes, thread, expected outcomes","exercises":[{"nivel":"Opening / Development / Closure","consigna":"→ Teacher: [what teacher does/says with material included if text]\\n→ Student: [clear complete instruction]","respuesta_docente":"expected responses, evaluation criteria, what to observe"}]}
+Between 6 and 8 sequenced activities with a clear connecting thread.`;
+
+  try {
+    const res = await callAI(prompt, 3500);
+    let data;
+    try { data = JSON.parse(res.replace(/```json|```/g,'').trim()); }
+    catch(e) { const m = res.match(/\{[\s\S]*\}/); if(m) { try { data = JSON.parse(m[0]); } catch(e2) { throw new Error(lang==='es'?'Intentá de nuevo.':'Please try again.'); } } else throw new Error(lang==='es'?'Intentá de nuevo.':'Please try again.'); }
+    stopLoad();
+    renderGuia(data);
+    goTo('guia');
+  } catch(e) { stopLoad(); alert('Error: '+e.message); goTo('didactica'); }
+}
+
+
+  document.getElementById('guia-titulo').textContent = data.titulo || '';
+  document.getElementById('guia-intro').textContent = data.introduccion || '';
+  const c = document.getElementById('guia-container');
+  c.innerHTML = '';
+  (data.exercises||[]).forEach((ex,i) => {
+    const d = document.createElement('div');
+    d.className = 'guia-card';
+    const verLabel = lang==='es'?'Ver respuesta (solo docente)':'View answer (teacher only)';
+    d.innerHTML = `<div class="guia-nivel">${esc(ex.nivel)} · ${lang==='es'?'Actividad':'Activity'} ${i+1}</div><div class="guia-consigna">${esc(ex.consigna)}</div><button class="btn btn-outline" style="font-size:12px;padding:7px 14px;" onclick="showEl('gr-${i}')">${verLabel}</button><div class="guia-respuesta" id="gr-${i}"><strong>${lang==='es'?'Para el docente:':'For the teacher:'}</strong> ${esc(ex.respuesta_docente)}</div>`;
+    c.appendChild(d);
+  });
+}
+
+function printGuia() {
+  document.querySelectorAll('.guia-respuesta').forEach(el => el.style.display = 'none');
+  window.print();
+  setTimeout(() => { document.querySelectorAll('.guia-respuesta.visible').forEach(el => el.style.display = 'block'); }, 1000);
+}
+
+async function callAI(prompt, maxTokens) {
+  const r = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] })
+  });
+  if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message||'Error HTTP '+r.status); }
+  const d = await r.json();
+  return d.choices?.[0]?.message?.content || '';
+}
+
+function formatMd(text) {
+  return text.replace(/### (.+)/g,'<h3>$1</h3>').replace(/## (.+)/g,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+}
+function esc(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+applyLang();
+</script>
 </body>
 </html>
