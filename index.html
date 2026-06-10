@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clara - Contenidos Matemáticos y Didáctica</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <div id="app">
+        </div>
+
+    <script>
+        // Estado de la aplicación
+        let lang = 'es';
+        let section = 'home';
+        let meta = 'duda';
+        let cronogramaCalculado = false;
+
+        // Traducciones exactas elegidas por vos
+        const t = {
+            es: {
+                title: 'Clara', subtitle: 'Contenidos Matemáticos y Didáctica', volver: '← Volver al inicio', consejoTitulo: '💡 Un consejo antes de empezar:',
+                homeBtnContenidos: 'Contenidos Matemáticos', homeDescContenidos: 'Para quienes necesitan comprender conceptos y resolver problemas desde cero, con opciones bien concretas y visuales.',
+                homeBtnDidactica: 'Didáctica de la Matemática', homeDescDidactica: 'Para docentes, estudiantes y adultos que buscan herramientas, enfoques pedagógicos y estrategias para guiar el aprendizaje.',
+                contTitulo: 'Contenidos Matemáticos', contConsejo: 'Para que la explicación te ayude a entender a fondo, sé lo más específico posible con el tema. Decime qué contenido o dificultad querés destrabar, así Clara puede prepararte los mejores gráficos, juegos o el paso a paso justo para vos.',
+                contPreguntaQue: '¿Qué contenido específico querés aprender?', contPlaceholderQue: 'Ej: Fracciones equivalentes, multiplicación por dos cifras...',
+                contPreguntaComo: '¿Cómo preferís aprenderlo? (Elegí la opción más concreta para vos)',
+                contOp1: 'Con dibujos y gráficos', contOp2: 'Con juegos y desafíos prácticos', contOp3: 'Explicado paso a paso desde cero',
+                planTitulo: '💡 Tu Plan de Estudio Personalizado', planDesc: 'Configurá tu disponibilidad para que Clara arme tu cronograma. Podés cambiar esto en cualquier momento si tus horarios cambian.',
+                planMeta: '¿Cuál es tu meta?', planMetaDuda: 'Estudiar un tema por mi cuenta / sacarme una duda', planMetaExamen: 'Preparar un examen',
+                planFechaExamen: 'Fecha del examen:', planDispo: '¿De cuánto tiempo disponés para estudiar? (Podés armarlo como prefieras)',
+                planDispOp1: 'Una clase diaria de 20 minutos.', planDispOp2: '3 veces por semana en bloques de 90 minutos.', planDispOp3: 'Personalizado',
+                btnCronograma: 'Calcular / Modificar Cronograma', cronoAlerta: '¡Cronograma recalculado con éxito! Clara adaptará el paso a paso a tu ritmo diario.',
+                didTitulo: 'Tu diseñador de estrategias didácticas', didSub: 'Te acompaño a pensar la clase: creá situaciones de aprendizaje reales y encontrá estrategias claras para guiar a tus estudiantes.',
+                didConsejo: 'Para que las estrategias te sirvan de verdad, sé lo más específico posible. Contame cómo es tu grupo, qué necesitan tus alumnos y con cuánto tiempo (semanas, clases o módulos) contás para trabajar este tema en el aula. Así podemos diseñar situaciones diferenciadas que se adapten a tu realidad.',
+                didPreguntaNivel: 'Nivel / Grado / Curso', didNivelSeleccione: 'Seleccioná el nivel...',
+                didNivel1: 'Primaria - Primer Ciclo (1° a 3°)', didNivel2: 'Primaria - Segundo Ciclo (4° a 7°)', didNivel3: 'Secundaria / Media', didNivel4: 'Formación Docente / Adultos',
+                didPreguntaMomento: 'Momento de la clase / secuencia', didMomento1: 'Inicio / Motivación', didMomento2: 'Desarrollo / Construcción del concepto', didMomento3: 'Cierre / Institucionalización', didMomento4: 'Secuencia completa',
+                didPreguntaTema: '¿Qué contenido específico vas a trabajar?', didPlaceholderTema: 'Ej: Multiplicación por dos cifras, Figuras geométricas...',
+                didPreguntaDiversidad: 'Atención a la diversidad (Opcional)', btnGenerar: 'Diseñar Estrategias'
+            },
+            en: {
+                title: 'Clara', subtitle: 'Mathematical Content and Didactics', volver: '← Back to home', consejoTitulo: '💡 A word of advice before starting:',
+                homeBtnContenidos: 'Mathematical Content', homeDescContenidos: 'For those who need to understand concepts and solve problems from scratch, with clear, concrete, and visual options.',
+                homeBtnDidactica: 'Mathematics Didactics', homeDescDidactica: 'For teachers, training students, and adults looking for tools, pedagogical approaches, and strategies to guide learning.',
+                contTitulo: 'Mathematical Content', contConsejo: 'For the explanation to fully help you understand, please be as specific as possible with the topic. Tell me what content or difficulty you want to unlock, so Clara can prepare the best graphics, games, or the exact step-by-step for you.',
+                contPreguntaQue: 'What specific content do you want to learn?', contPlaceholderQue: 'e.g., Equivalent fractions, long division...',
+                contPreguntaComo: 'How do you prefer to learn it? (Choose the most concrete option for you)',
+                contOp1: 'With drawings and graphs', contOp2: 'With games and practical challenges', contOp3: 'Explained step-by-step from scratch',
+                planTitulo: '💡 Your Personalized Study Plan', planDesc: 'Set your availability so Clara can build your schedule. You can modify this at any time if your hours change.',
+                planMeta: 'What is your goal?', planMetaDuda: 'Study a topic on my own / clear up a doubt', planMetaExamen: 'Prepare for an exam',
+                planFechaExamen: 'Exam date:', planDispo: 'How much time do you have to study? (Set it as you prefer)',
+                planDispOp1: 'A daily 20-minute class.', planDispOp2: '3 times a week in 90-minute blocks.', planDispOp3: 'Customized',
+                btnCronograma: 'Calculate / Modify Schedule', cronoAlerta: 'Schedule successfully recalculated! Clara will adapt the step-by-step to your daily pace.',
+                didTitulo: 'Your didactic strategy designer', didSub: 'I accompany you to design your class: create real learning situations and find clear strategies to guide your students.',
+                didConsejo: 'For the strategies to truly work for you, please be as specific as possible. Tell me about your group, what your students need, and how much time (weeks, classes, or modules) you have to work on this topic in the classroom. This way we can design differentiated situations tailored to your reality.',
+                didPreguntaNivel: 'Level / Grade / Course', didNivelSeleccione: 'Select level...',
+                didNivel1: 'Primary - First Cycle (1st to 3rd Grade)', didNivel2: 'Primary - Second Cycle (4th to 7th Grade)', didNivel3: 'Secondary / High School', didNivel4: 'Teacher Training / Adults',
+                didPreguntaMomento: 'Lesson / Sequence Stage', didMomento1: 'Warm-up / Motivation', didMomento2: 'Development / Concept Building', didMomento3: 'Wrap-up / Institutionalization', didMomento4: 'Full sequence',
+                didPreguntaTema: 'What specific content will you work on?', didPlaceholderTema: 'e.g., Long division, Geometric shapes...',
+                didPreguntaDiversidad: 'Attention to diversity (Optional)', btnGenerar: 'Design Strategies'
+            }
+        };
+
+        // Función para renderizar la pantalla dinámicamente
+        function render() {
+            const current = t[lang];
+            let html = `
+                <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+                    <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+                        <div class="flex items-center space-x-2 cursor-pointer" onclick="navigate('home')">
+                            <div class="relative bg-amber-100 p-2 rounded-full">
+                                <span class="text-xl">💡</span>
+                                <span class="absolute bottom-0 right-1 text-[9px]">😊</span>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold tracking-tight text-slate-900">${current.title}</h1>
+                                <p class="text-xs text-slate-500 hidden sm:block">${current.subtitle}</p>
+                            </div>
+                        </div>
+                        <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
+                            <button onclick="setLanguage('es')" class="px-3 py-1.5 rounded-md transition-all ${lang === 'es' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600'}">Español</button>
+                            <button onclick="setLanguage('en')" class="px-3 py-1.5 rounded-md transition-all ${lang === 'en' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600'}">English</button>
+                        </div>
+                    </div>
+                </header>
+                <main class="max-w-5xl mx-auto px-4 py-8">
+            `;
+
+            if (section !== 'home') {
+                html += `<button onclick="navigate('home')" class="mb-6 text-sm font-medium text-teal-600 hover:text-teal-800">${current.volver}</button>`;
+            }
+
+            // HOME
+            if (section === 'home') {
+                html += `
+                    <div class="max-w-3xl mx-auto text-center py-12">
+                        <div class="inline-flex bg-amber-50 border border-amber-200 px-4 py-2 rounded-full text-amber-800 text-sm font-medium mb-6 items-center space-x-2">
+                            <span>💡 ¡Hola! Elegí el camino que querés recorrer hoy</span>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-6 mt-4">
+                            <button onclick="navigate('contenidos')" class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left hover:border-teal-500 hover:shadow-md transition-all flex flex-col justify-between">
+                                <div><div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center mb-4 text-xl">📖</div>
+                                <h3 class="text-xl font-bold text-slate-900 mb-2">${current.homeBtnContenidos}</h3>
+                                <p class="text-slate-600 text-sm">${current.homeDescContenidos}</p></div>
+                            </button>
+                            <button onclick="navigate('didactica')" class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left hover:border-indigo-500 hover:shadow-md transition-all flex flex-col justify-between">
+                                <div><div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-4 text-xl">🎓</div>
+                                <h3 class="text-xl font-bold text-slate-900 mb-2">${current.homeBtnDidactica}</h3>
+                                <p class="text-slate-600 text-sm">${current.homeDescDidactica}</p></div>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // CONTENIDOS
+            if (section === 'contenidos') {
+                html += `
+                    <div class="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <h2 class="text-2xl font-bold text-slate-900 border-b pb-4 mb-6 flex items-center gap-2">📖 ${current.contTitulo}</h2>
+                        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl mb-6">
+                            <h4 class="font-bold text-amber-900 text-sm mb-1">${current.consejoTitulo}</h4>
+                            <p class="text-amber-950 text-sm">${current.contConsejo}</p>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-2">${current.contPreguntaQue}</label>
+                                <input type="text" class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm" placeholder="${current.contPlaceholderQue}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-2">${current.contPreguntaComo}</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-3 p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium"><input type="radio" name="como" checked> <span>${current.contOp1}</span></label>
+                                    <label class="flex items-center space-x-3 p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium"><input type="radio" name="como"> <span>${current.contOp2}</span></label>
+                                    <label class="flex items-center space-x-3 p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium"><input type="radio" name="como"> <span>${current.contOp3}</span></label>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t pt-4 mt-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <h3 class="text-sm font-bold text-slate-900 mb-1">⏱️ ${current.planTitulo}</h3>
+                                <p class="text-xs text-slate-500 mb-3">${current.planDesc}</p>
+                                <div class="mb-3">
+                                    <span class="block text-xs font-bold text-slate-700 mb-2">${current.planMeta}</span>
+                                    <div class="flex gap-2">
+                                        <button onclick="setMeta('duda')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border ${meta === 'duda' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white text-slate-600'}">${current.planMetaDuda}</button>
+                                        <button onclick="setMeta('examen')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border ${meta === 'examen' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white text-slate-600'}">${current.planMetaExamen}</button>
+                                    </div>
+                                </div>
+                                ${meta === 'examen' ? `
+                                    <div class="mb-3 bg-white p-2 border border-slate-200 rounded text-xs">
+                                        <label class="block font-bold mb-1">${current.planFechaExamen}</label>
+                                        <input type="date" class="border p-1 rounded">
+                                    </div>
+                                ` : ''}
+                                <div class="space-y-1 text-xs text-slate-700">
+                                    <span class="block font-bold mb-1">${current.planDispo}</span>
+                                    <label class="flex items-center space-x-2"><input type="radio" name="disp" checked> <span>${current.planDispOp1}</span></label>
+                                    <label class="flex items-center space-x-2"><input type="radio" name="disp"> <span>${current.planDispOp2}</span></label>
+                                    <label class="flex items-center space-x-2"><input type="radio" name="disp"> <span>${current.planDispOp3}...</span></label>
+                                </div>
+                                <button onclick="calcularCrono()" class="w-full mt-3 bg-white hover:bg-slate-100 border p-2 rounded-xl text-xs font-bold text-slate-700">🔄 ${current.btnCronograma}</button>
+                                ${cronogramaCalculado ? `<div class="mt-3 bg-teal-50 border border-teal-200 p-2 rounded text-xs text-teal-800 font-medium">✨ ${current.cronoAlerta}</div>` : ''}
+                            </div>
+                            <button class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all mt-4">${current.btnGenerar}</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // DIDÁCTICA
+            if (section === 'didactica') {
+                html += `
+                    <div class="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <div class="border-b pb-4 mb-6">
+                            <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">🎓 ${current.didTitulo}</h2>
+                            <p class="text-sm text-slate-600 font-medium mt-1">${current.didSub}</p>
+                        </div>
+                        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl mb-6">
+                            <h4 class="font-bold text-amber-900 text-sm mb-1">${current.consejoTitulo}</h4>
+                            <p class="text-amber-950 text-sm">${current.didConsejo}</p>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">📁 ${current.didPreguntaNivel}</label>
+                                <select class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm bg-white">
+                                    <option value="">${current.didNivelSeleccione}</option>
+                                    <option value="1">${current.didNivel1}</option>
+                                    <option value="2">${current.didNivel2}</option>
+                                    <option value="3">${current.didNivel3}</option>
+                                    <option value="4">${current.didNivel4}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">⏳ ${current.didPreguntaMomento}</label>
+                                <select class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm bg-white">
+                                    <option value="1">${current.didMomento1}</option>
+                                    <option value="2">${current.didMomento2}</option>
+                                    <option value="3">${current.didMomento3}</option>
+                                    <option value="4">${current.didMomento4}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">✏️ ${current.didPreguntaTema}</label>
+                                <input type="text" class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm" placeholder="${current.didPlaceholderTema}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">👥 ${current.didPreguntaDiversidad}</label>
+                                <textarea class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm h-20 resize-none" placeholder="Ej: Ritmos de aprendizaje diversos, necesidades de apoyo visual..."></textarea>
+                            </div>
+                            <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all mt-4">${current.btnGenerar}</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `</main>`;
+            document.getElementById('app').innerHTML = html;
+        }
+
+        // Funciones de control de la app
+        function navigate(sec) { section = sec; cronogramaCalculado = false; render(); }
+        function setLanguage(l) { lang = l; render(); }
+        function setMeta(m) { meta = m; render(); }
+        function calcularCrono() { cronogramaCalculado = true; render(); }
+
+        // Carga inicial
+        render();
+    </script>
+</body>
+</html>
