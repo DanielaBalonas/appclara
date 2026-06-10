@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clara - Contenidos Matemáticos y Didáctica</title>
+    <title>Clara - Personal Learning Companion</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,81 +14,169 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
 
-    <div id="app">
-        </div>
+    <div id="app"></div>
 
     <script>
-        // Estado de la aplicación
+        // Estado global de la aplicación
         let lang = 'es';
         let section = 'home';
         let meta = 'duda';
         let cronogramaCalculado = false;
+        let procesando = false;
+        let resultadoSimulado = null;
 
-        // Traducciones exactas elegidas por vos
+        // Textos bilingües fieles al diseño original
         const t = {
             es: {
-                title: 'Clara', subtitle: 'Contenidos Matemáticos y Didáctica', volver: '← Volver al inicio', consejoTitulo: '💡 Un consejo antes de empezar:',
-                homeBtnContenidos: 'Contenidos Matemáticos', homeDescContenidos: 'Para quienes necesitan comprender conceptos y resolver problemas desde cero, con opciones bien concretas y visuales.',
-                homeBtnDidactica: 'Didáctica de la Matemática', homeDescDidactica: 'Para docentes, estudiantes y adultos que buscan herramientas, enfoques pedagógicos y estrategias para guiar el aprendizaje.',
-                contTitulo: 'Contenidos Matemáticos', contConsejo: 'Para que la explicación te ayude a entender a fondo, sé lo más específico posible con el tema. Decime qué contenido o dificultad querés destrabar, así Clara puede prepararte los mejores gráficos, juegos o el paso a paso justo para vos.',
-                contPreguntaQue: '¿Qué contenido específico querés aprender?', contPlaceholderQue: 'Ej: Fracciones equivalentes, multiplicación por dos cifras...',
+                title: 'Clara',
+                subtitle: 'Tu compañera de aprendizaje personalizado con IA',
+                volver: '← Volver',
+                consejoTitulo: '💡 Un consejo antes de empezar:',
+                adjuntarLabel: '📁 Adjuntar archivo (PDF, recortes de diseño o fotos de consignas):',
+                
+                // Home original
+                homeTitle: '¡Hola! Soy Clara',
+                homeSubtitle: 'Tu compañera inteligente de aprendizaje y planificadora didáctica. Elegí el camino que querés recorrer hoy:',
+                homeBtnContenidos: 'Quiero aprender',
+                homeDescContenidos: 'Construí tu propio proyecto personalizado de aprendizaje para comprender conceptos y resolver problemas matemáticos de cualquier nivel.',
+                homeBtnDidactica: 'Soy docente',
+                homeDescDidactica: 'Diseñá secuencias didácticas, planificaciones reales e integrales con múltiples enfoques didácticos y atención a la diversidad.',
+                
+                // Contenidos Matemáticos
+                contTitulo: 'Contenidos Matemáticos',
+                contConsejo: 'Para que la explicación te ayude a entender a fondo, sé lo más específico posible con el tema. Decime qué contenido o dificultad querés destrabar, así Clara puede prepararte los mejores gráficos, juegos o el paso a paso justo para vos.',
+                contPreguntaNivel: 'Nivel académico / Curso / Grado:',
+                contPreguntaQue: 'Contame detalladamente qué contenido necesitás aprender o qué duda querés resolver:',
+                contPlaceholderQue: 'Ej: Estoy trabada con las fracciones equivalentes, me cuesta darme cuenta de cómo simplificar gráficamente...',
                 contPreguntaComo: '¿Cómo preferís aprenderlo? (Elegí la opción más concreta para vos)',
-                contOp1: 'Con dibujos y gráficos', contOp2: 'Con juegos y desafíos prácticos', contOp3: 'Explicado paso a paso desde cero',
-                planTitulo: '💡 Tu Plan de Estudio Personalizado', planDesc: 'Configurá tu disponibilidad para que Clara arme tu cronograma. Podés cambiar esto en cualquier momento si tus horarios cambian.',
-                planMeta: '¿Cuál es tu meta?', planMetaDuda: 'Estudiar un tema por mi cuenta / sacarme una duda', planMetaExamen: 'Preparar un examen',
-                planFechaExamen: 'Fecha del examen:', planDispo: '¿De cuánto tiempo disponés para estudiar? (Podés armarlo como prefieras)',
-                planDispOp1: 'Una clase diaria de 20 minutos.', planDispOp2: '3 veces por semana en bloques de 90 minutos.', planDispOp3: 'Personalizado',
-                btnCronograma: 'Calcular / Modificar Cronograma', cronoAlerta: '¡Cronograma recalculado con éxito! Clara adaptará el paso a paso a tu ritmo diario.',
-                didTitulo: 'Tu diseñador de estrategias didácticas', didSub: 'Te acompaño a pensar la clase: creá situaciones de aprendizaje reales y encontrá estrategias claras para guiar a tus estudiantes.',
+                contOp1: 'Con dibujos y gráficos',
+                contOp2: 'Con juegos y desafíos prácticos',
+                contOp3: 'Explicado paso a paso desde cero',
+                btnComenzar: '¡Comenzar a aprender!',
+                
+                // Planificador integrado
+                planTitulo: '💡 Tu Plan de Estudio Personalizado',
+                planDesc: 'Configurá tu disponibilidad para que Clara arme tu cronograma. Podés cambiar esto en cualquier momento si tus horarios cambian.',
+                planMeta: '¿Cuál es tu meta?',
+                planMetaDuda: 'Estudiar un tema por mi cuenta / sacarme una duda',
+                planMetaExamen: 'Preparar un examen',
+                planFechaExamen: 'Fecha del examen:',
+                planDispo: '¿De cuánto tiempo disponés para estudiar? (Podés armarlo como prefieras)',
+                planDispOp1: 'Una clase diaria de 20 minutos.',
+                planDispOp2: '3 veces por semana en bloques de 90 minutos.',
+                planDispOp3: 'Personalizado',
+                btnCronograma: 'Calcular / Modificar Cronograma',
+                cronoAlerta: '¡Cronograma recalculado con éxito! Clara adaptará el paso a paso a tu ritmo diario.',
+
+                // Didáctica de la Matemática original
+                didTitulo: 'Tu diseñador de estrategias didácticas',
+                didSub: 'Te acompaño a pensar la clase: creá situaciones de aprendizaje reales y encontrá estrategias claras para guiar a tus estudiantes.',
                 didConsejo: 'Para que las estrategias te sirvan de verdad, sé lo más específico posible. Contame cómo es tu grupo, qué necesitan tus alumnos y con cuánto tiempo (semanas, clases o módulos) contás para trabajar este tema en el aula. Así podemos diseñar situaciones diferenciadas que se adapten a tu realidad.',
-                didPreguntaNivel: 'Nivel / Grado / Curso', didNivelSeleccione: 'Seleccioná el nivel...',
-                didNivel1: 'Primaria - Primer Ciclo (1° a 3°)', didNivel2: 'Primaria - Segundo Ciclo (4° a 7°)', didNivel3: 'Secundaria / Media', didNivel4: 'Formación Docente / Adultos',
-                didPreguntaMomento: 'Momento de la clase / secuencia', didMomento1: 'Inicio / Motivación', didMomento2: 'Desarrollo / Construcción del concepto', didMomento3: 'Cierre / Institucionalización', didMomento4: 'Secuencia completa',
-                didPreguntaTema: '¿Qué contenido específico vas a trabajar?', didPlaceholderTema: 'Ej: Multiplicación por dos cifras, Figuras geométricas...',
-                didPreguntaDiversidad: 'Atención a la diversidad (Opcional)', btnGenerar: 'Diseñar Estrategias'
+                didPreguntaNivel: 'Level / Grade / Course:',
+                didNivelSeleccione: 'Seleccioná el nivel...',
+                didNivel1: 'Primaria - Primer Ciclo (1° a 3°)',
+                didNivel2: 'Primaria - Segundo Ciclo (4° a 7°)',
+                didNivel3: 'Secundaria / Media',
+                didNivel4: 'Formación Docente / Adultos',
+                didPreguntaMomento: 'Momento de la clase o secuencia:',
+                didMomento1: 'Inicio / Motivación',
+                didMomento2: 'Desarrollo / Construcción del concepto',
+                didMomento3: 'Cierre / Institucionalización',
+                didMomento4: 'Secuencia completa',
+                didPreguntaTema: 'Contame en detalle qué contenido vas a trabajar y las características de tu grupo:',
+                didPlaceholderTema: 'Ej: Voy a dar multiplicación por dos cifras en 4to grado. Cuentan con 3 módulos semanales de 80 minutos. Necesito un enfoque constructivista...',
+                didPreguntaDiversidad: 'Atención a la diversidad (Opcional):',
+                btnGenerar: 'Diseñar Estrategias',
+
+                // Simulación de Respuestas
+                procesandoTxt: 'Clara está analizando tu propuesta...',
+                resultadoTitulo: '✨ Respuesta Diseñada por Clara'
             },
             en: {
-                title: 'Clara', subtitle: 'Mathematical Content and Didactics', volver: '← Back to home', consejoTitulo: '💡 A word of advice before starting:',
-                homeBtnContenidos: 'Mathematical Content', homeDescContenidos: 'For those who need to understand concepts and solve problems from scratch, with clear, concrete, and visual options.',
-                homeBtnDidactica: 'Mathematics Didactics', homeDescDidactica: 'For teachers, training students, and adults looking for tools, pedagogical approaches, and strategies to guide learning.',
-                contTitulo: 'Mathematical Content', contConsejo: 'For the explanation to fully help you understand, please be as specific as possible with the topic. Tell me what content or difficulty you want to unlock, so Clara can prepare the best graphics, games, or the exact step-by-step for you.',
-                contPreguntaQue: 'What specific content do you want to learn?', contPlaceholderQue: 'e.g., Equivalent fractions, long division...',
+                title: 'Clara',
+                subtitle: 'Your intelligent AI learning companion and didactic planner',
+                volver: '← Back',
+                consejoTitulo: '💡 A word of advice before starting:',
+                adjuntarLabel: '📁 Attach file (PDF, design clips, or screenshots of tasks):',
+                
+                // Home original
+                homeTitle: 'Hi! I\'m Clara',
+                homeSubtitle: 'Your intelligent learning companion and didactic planner. Choose the path you want to take today:',
+                homeBtnContenidos: 'I want to learn',
+                homeDescContenidos: 'Build your own personalized learning project to understand concepts and solve mathematical problems of any level.',
+                homeBtnDidactica: 'I\'m a teacher',
+                homeDescDidactica: 'Design didactic sequences, real and comprehensive plans with multiple teaching approaches and attention to diversity.',
+                
+                // Contenidos Matemáticos
+                contTitulo: 'Mathematical Content',
+                contConsejo: 'For the explanation to fully help you understand, please be as specific as possible with the topic. Tell me what content or difficulty you want to unlock, so Clara can prepare the best graphics, games, or the exact step-by-step for you.',
+                contPreguntaNivel: 'Academic Level / Course / Grade:',
+                contPreguntaQue: 'Tell me in detail what content you need to learn or what doubt you want to solve:',
+                contPlaceholderQue: 'e.g., I am stuck with equivalent fractions, I struggle to realize how to simplify graphically...',
                 contPreguntaComo: 'How do you prefer to learn it? (Choose the most concrete option for you)',
-                contOp1: 'With drawings and graphs', contOp2: 'With games and practical challenges', contOp3: 'Explained step-by-step from scratch',
-                planTitulo: '💡 Your Personalized Study Plan', planDesc: 'Set your availability so Clara can build your schedule. You can modify this at any time if your hours change.',
-                planMeta: 'What is your goal?', planMetaDuda: 'Study a topic on my own / clear up a doubt', planMetaExamen: 'Prepare for an exam',
-                planFechaExamen: 'Exam date:', planDispo: 'How much time do you have to study? (Set it as you prefer)',
-                planDispOp1: 'A daily 20-minute class.', planDispOp2: '3 times a week in 90-minute blocks.', planDispOp3: 'Customized',
-                btnCronograma: 'Calculate / Modify Schedule', cronoAlerta: 'Schedule successfully recalculated! Clara will adapt the step-by-step to your daily pace.',
-                didTitulo: 'Your didactic strategy designer', didSub: 'I accompany you to design your class: create real learning situations and find clear strategies to guide your students.',
+                contOp1: 'With drawings and graphs',
+                contOp2: 'With games and practical challenges',
+                contOp3: 'Explained step-by-step from scratch',
+                btnComenzar: 'Start Learning!',
+                
+                // Planificador integrado
+                planTitulo: '💡 Your Personalized Study Plan',
+                planDesc: 'Set your availability so Clara can build your schedule. You can modify this at any time if your hours change.',
+                planMeta: 'What is your goal?',
+                planMetaDuda: 'Study a topic on my own / clear up a doubt',
+                planMetaExamen: 'Prepare for an exam',
+                planFechaExamen: 'Exam date:',
+                planDispo: 'How much time do you have to study? (Set it as you prefer)',
+                planDispOp1: 'A daily 20-minute class.',
+                planDispOp2: '3 times a week in 90-minute blocks.',
+                planDispOp3: 'Customized',
+                btnCronograma: 'Calculate / Modify Schedule',
+                cronoAlerta: 'Schedule successfully recalculated! Clara will adapt the step-by-step to your daily pace.',
+
+                // Didáctica de la Matemática original
+                didTitulo: 'Your didactic strategy designer',
+                didSub: 'I accompany you to design your class: create real learning situations and find clear strategies to guide your students.',
                 didConsejo: 'For the strategies to truly work for you, please be as specific as possible. Tell me about your group, what your students need, and how much time (weeks, classes, or modules) you have to work on this topic in the classroom. This way we can design differentiated situations tailored to your reality.',
-                didPreguntaNivel: 'Level / Grade / Course', didNivelSeleccione: 'Select level...',
-                didNivel1: 'Primary - First Cycle (1st to 3rd Grade)', didNivel2: 'Primary - Second Cycle (4th to 7th Grade)', didNivel3: 'Secondary / High School', didNivel4: 'Teacher Training / Adults',
-                didPreguntaMomento: 'Lesson / Sequence Stage', didMomento1: 'Warm-up / Motivation', didMomento2: 'Development / Concept Building', didMomento3: 'Wrap-up / Institutionalization', didMomento4: 'Full sequence',
-                didPreguntaTema: 'What specific content will you work on?', didPlaceholderTema: 'e.g., Long division, Geometric shapes...',
-                didPreguntaDiversidad: 'Attention to diversity (Optional)', btnGenerar: 'Design Strategies'
+                didPreguntaNivel: 'Level / Grade / Course:',
+                didNivelSeleccione: 'Select level...',
+                didNivel1: 'Primary - First Cycle (1st to 3rd Grade)',
+                didNivel2: 'Primary - Second Cycle (4th to 7th Grade)',
+                didNivel3: 'Secondary / High School',
+                didNivel4: 'Teacher Training / Adults',
+                didPreguntaMomento: 'Lesson / Sequence Stage:',
+                didMomento1: 'Warm-up / Motivation',
+                didMomento2: 'Development / Concept Building',
+                didMomento3: 'Wrap-up / Institutionalization',
+                didMomento4: 'Full sequence',
+                didPreguntaTema: 'Tell me in detail what content you will work on and your group details:',
+                didPlaceholderTema: 'e.g., I am going to teach long division in 4th grade. They have 3 weekly modules of 80 minutes. I need constructivist ideas...',
+                didPreguntaDiversidad: 'Attention to diversity (Optional):',
+                btnGenerar: 'Design Strategies',
+
+                // Simulación de Respuestas
+                procesandoTxt: 'Clara is analyzing your request...',
+                resultadoTitulo: '✨ Response Designed by Clara'
             }
         };
 
-        // Función para renderizar la pantalla dinámicamente
+        // Función para renderizar toda la interfaz dinámica
         function render() {
             const current = t[lang];
             let html = `
-                <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+                <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
                     <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
                         <div class="flex items-center space-x-2 cursor-pointer" onclick="navigate('home')">
-                            <div class="relative bg-amber-100 p-2 rounded-full">
-                                <span class="text-xl">💡</span>
-                                <span class="absolute bottom-0 right-1 text-[9px]">😊</span>
+                            <div class="relative bg-emerald-50 p-2 rounded-full">
+                                <span class="text-2xl">💡</span>
+                                <span class="absolute bottom-0 right-1 text-[10px]">😊</span>
                             </div>
                             <div>
-                                <h1 class="text-2xl font-bold tracking-tight text-slate-900">${current.title}</h1>
-                                <p class="text-xs text-slate-500 hidden sm:block">${current.subtitle}</p>
+                                <h1 class="text-xl font-bold tracking-tight text-slate-900">${current.title}</h1>
                             </div>
                         </div>
                         <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
-                            <button onclick="setLanguage('es')" class="px-3 py-1.5 rounded-md transition-all ${lang === 'es' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600'}">Español</button>
-                            <button onclick="setLanguage('en')" class="px-3 py-1.5 rounded-md transition-all ${lang === 'en' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-600'}">English</button>
+                            <button onclick="setLanguage('es')" class="px-3 py-1.5 rounded-md transition-all ${lang === 'es' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">Español</button>
+                            <button onclick="setLanguage('en')" class="px-3 py-1.5 rounded-md transition-all ${lang === 'en' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">English</button>
                         </div>
                     </div>
                 </header>
@@ -96,102 +184,140 @@
             `;
 
             if (section !== 'home') {
-                html += `<button onclick="navigate('home')" class="mb-6 text-sm font-medium text-teal-600 hover:text-teal-800">${current.volver}</button>`;
+                html += `<button onclick="navigate('home')" class="mb-6 text-sm font-medium text-emerald-600 hover:text-emerald-800">${current.volver}</button>`;
             }
 
-            // HOME
+            // ==========================================
+            // VISTA HOME ORIGINAL RECONSTRUIDA
+            // ==========================================
             if (section === 'home') {
                 html += `
                     <div class="max-w-3xl mx-auto text-center py-12">
-                        <div class="inline-flex bg-amber-50 border border-amber-200 px-4 py-2 rounded-full text-amber-800 text-sm font-medium mb-6 items-center space-x-2">
-                            <span>💡 ¡Hola! Elegí el camino que querés recorrer hoy</span>
-                        </div>
-                        <div class="grid md:grid-cols-2 gap-6 mt-4">
-                            <button onclick="navigate('contenidos')" class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left hover:border-teal-500 hover:shadow-md transition-all flex flex-col justify-between">
-                                <div><div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center mb-4 text-xl">📖</div>
-                                <h3 class="text-xl font-bold text-slate-900 mb-2">${current.homeBtnContenidos}</h3>
-                                <p class="text-slate-600 text-sm">${current.homeDescContenidos}</p></div>
-                            </button>
-                            <button onclick="navigate('didactica')" class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left hover:border-indigo-500 hover:shadow-md transition-all flex flex-col justify-between">
-                                <div><div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-4 text-xl">🎓</div>
-                                <h3 class="text-xl font-bold text-slate-900 mb-2">${current.homeBtnDidactica}</h3>
-                                <p class="text-slate-600 text-sm">${current.homeDescDidactica}</p></div>
-                            </button>
+                        <h2 class="text-3xl font-bold text-slate-900 mb-2">${current.homeTitle}</h2>
+                        <p class="text-slate-600 text-sm max-w-xl mx-auto mb-10 leading-relaxed">${current.homeSubtitle}</p>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-white border border-slate-200 rounded-xl p-6 text-center flex flex-col justify-between items-center shadow-sm">
+                                <div class="flex flex-col items-center">
+                                    <h3 class="text-lg font-bold text-slate-900 mb-2">${current.homeBtnContenidos}</h3>
+                                    <p class="text-slate-500 text-sm leading-relaxed mb-6">${current.homeDescContenidos}</p>
+                                </div>
+                                <button onclick="navigate('contenidos')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-all">
+                                    ${current.homeBtnContenidos}
+                                </button>
+                            </div>
+                            
+                            <div class="bg-white border border-slate-200 rounded-xl p-6 text-center flex flex-col justify-between items-center shadow-sm">
+                                <div class="flex flex-col items-center">
+                                    <h3 class="text-lg font-bold text-slate-900 mb-2">${current.homeBtnDidactica}</h3>
+                                    <p class="text-slate-500 text-sm leading-relaxed mb-6">${current.homeDescDidactica}</p>
+                                </div>
+                                <button onclick="navigate('didactica')" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold py-2.5 rounded-lg transition-all">
+                                    ${current.homeBtnDidactica}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
             }
 
-            // CONTENIDOS
+            // ==========================================
+            // VISTA CONTENIDOS MATEMÁTICOS (REPARADA)
+            // ==========================================
             if (section === 'contenidos') {
                 html += `
-                    <div class="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
-                        <h2 class="text-2xl font-bold text-slate-900 border-b pb-4 mb-6 flex items-center gap-2">📖 ${current.contTitulo}</h2>
-                        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl mb-6">
-                            <h4 class="font-bold text-amber-900 text-sm mb-1">${current.consejoTitulo}</h4>
-                            <p class="text-amber-950 text-sm">${current.contConsejo}</p>
+                    <div class="max-w-2xl mx-auto bg-white border border-slate-200 rounded-xl p-6 md:p-8 shadow-sm">
+                        <h2 class="text-xl font-bold text-slate-900 border-b pb-3 mb-5">📖 ${current.contTitulo}</h2>
+                        
+                        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-5">
+                            <h4 class="font-bold text-amber-900 text-xs mb-0.5">${current.consejoTitulo}</h4>
+                            <p class="text-amber-950 text-xs leading-relaxed">${current.contConsejo}</p>
                         </div>
+
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-2">${current.contPreguntaQue}</label>
-                                <input type="text" class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm" placeholder="${current.contPlaceholderQue}">
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">${current.contPreguntaNivel}</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-emerald-500">
+                                    <option value="">${current.didNivelSeleccione}</option>
+                                    <option value="1">${current.didNivel1}</option>
+                                    <option value="2">${current.didNivel2}</option>
+                                    <option value="3">${current.didNivel3}</option>
+                                    <option value="4">${current.didNivel4}</option>
+                                </select>
                             </div>
+
                             <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-2">${current.contPreguntaComo}</label>
-                                <div class="space-y-2">
-                                    <label class="flex items-center space-x-3 p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium"><input type="radio" name="como" checked> <span>${current.contOp1}</span></label>
-                                    <label class="flex items-center space-x-3 p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium"><input type="radio" name="como"> <span>${current.contOp2}</span></label>
-                                    <label class="flex items-center space-x-3 p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer text-sm font-medium"><input type="radio" name="como"> <span>${current.contOp3}</span></label>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">${current.contPreguntaQue}</label>
+                                <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm h-28 resize-none focus:outline-emerald-500" placeholder="${current.contPlaceholderQue}"></textarea>
+                            </div>
+
+                            <div class="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">${current.adjuntarLabel}</label>
+                                <input type="file" class="text-xs text-slate-600 block w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">${current.contPreguntaComo}</label>
+                                <div class="space-y-1.5 text-sm font-medium">
+                                    <label class="flex items-center space-x-2.5 p-2 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="como" checked class="w-4 h-4 text-emerald-600"> <span>${current.contOp1}</span></label>
+                                    <label class="flex items-center space-x-2.5 p-2 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="como" class="w-4 h-4 text-emerald-600"> <span>${current.contOp2}</span></label>
+                                    <label class="flex items-center space-x-2.5 p-2 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"><input type="radio" name="como" class="w-4 h-4 text-emerald-600"> <span>${current.contOp3}</span></label>
                                 </div>
                             </div>
                             
-                            <div class="border-t pt-4 mt-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                <h3 class="text-sm font-bold text-slate-900 mb-1">⏱️ ${current.planTitulo}</h3>
-                                <p class="text-xs text-slate-500 mb-3">${current.planDesc}</p>
+                            <div class="border-t pt-4 mt-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1">⏱️ ${current.planTitulo}</h3>
+                                <p class="text-[11px] text-slate-500 mb-3">${current.planDesc}</p>
                                 <div class="mb-3">
-                                    <span class="block text-xs font-bold text-slate-700 mb-2">${current.planMeta}</span>
+                                    <span class="block text-xs font-bold text-slate-700 mb-1.5">${current.planMeta}</span>
                                     <div class="flex gap-2">
-                                        <button onclick="setMeta('duda')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border ${meta === 'duda' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white text-slate-600'}">${current.planMetaDuda}</button>
-                                        <button onclick="setMeta('examen')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border ${meta === 'examen' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white text-slate-600'}">${current.planMetaExamen}</button>
+                                        <button type="button" onclick="setMeta('duda')" class="px-2.5 py-1 text-xs font-semibold rounded border transition-all ${meta === 'duda' ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' : 'bg-white text-slate-600'}">${current.planMetaDuda}</button>
+                                        <button type="button" onclick="setMeta('examen')" class="px-2.5 py-1 text-xs font-semibold rounded border transition-all ${meta === 'examen' ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' : 'bg-white text-slate-600'}">${current.planMetaExamen}</button>
                                     </div>
                                 </div>
                                 ${meta === 'examen' ? `
                                     <div class="mb-3 bg-white p-2 border border-slate-200 rounded text-xs">
-                                        <label class="block font-bold mb-1">${current.planFechaExamen}</label>
-                                        <input type="date" class="border p-1 rounded">
+                                        <label class="block font-bold text-slate-700 mb-1">${current.planFechaExamen}</label>
+                                        <input type="date" class="border p-1 rounded border-slate-300 focus:outline-emerald-500">
                                     </div>
                                 ` : ''}
-                                <div class="space-y-1 text-xs text-slate-700">
-                                    <span class="block font-bold mb-1">${current.planDispo}</span>
-                                    <label class="flex items-center space-x-2"><input type="radio" name="disp" checked> <span>${current.planDispOp1}</span></label>
-                                    <label class="flex items-center space-x-2"><input type="radio" name="disp"> <span>${current.planDispOp2}</span></label>
-                                    <label class="flex items-center space-x-2"><input type="radio" name="disp"> <span>${current.planDispOp3}...</span></label>
+                                <div class="space-y-1.5 text-xs text-slate-700">
+                                    <span class="block font-bold text-slate-800 mb-0.5">${current.planDispo}</span>
+                                    <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="disp" checked class="text-emerald-600"> <span>${current.planDispOp1}</span></label>
+                                    <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="disp" class="text-emerald-600"> <span>${current.planDispOp2}</span></label>
+                                    <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="disp" class="text-emerald-600"> <span>${current.planDispOp3}</span></label>
                                 </div>
-                                <button onclick="calcularCrono()" class="w-full mt-3 bg-white hover:bg-slate-100 border p-2 rounded-xl text-xs font-bold text-slate-700">🔄 ${current.btnCronograma}</button>
-                                ${cronogramaCalculado ? `<div class="mt-3 bg-teal-50 border border-teal-200 p-2 rounded text-xs text-teal-800 font-medium">✨ ${current.cronoAlerta}</div>` : ''}
+                                <button type="button" onclick="calcularCrono()" class="w-full mt-3 bg-white hover:bg-slate-100 border border-slate-300 p-2 rounded-lg text-xs font-bold text-slate-700 shadow-sm">🔄 ${current.btnCronograma}</button>
+                                ${cronogramaCalculado ? `<div class="mt-2 bg-emerald-50 border border-emerald-200 p-2 rounded text-xs text-emerald-800 font-medium">✨ ${current.cronoAlerta}</div>` : ''}
                             </div>
-                            <button class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all mt-4">${current.btnGenerar}</button>
+
+                            <button onclick="procesarAccion('contenidos')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm transition-all shadow-sm mt-3">
+                                ${procesando ? current.procesandoTxt : current.btnComenzar}
+                            </button>
                         </div>
+
+                        <div id="resultado-box"></div>
                     </div>
                 `;
             }
 
-            // DIDÁCTICA
+            // ==========================================
+            // VISTA SOY DOCENTE (REPARADA)
+            // ==========================================
             if (section === 'didactica') {
                 html += `
-                    <div class="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
-                        <div class="border-b pb-4 mb-6">
-                            <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">🎓 ${current.didTitulo}</h2>
-                            <p class="text-sm text-slate-600 font-medium mt-1">${current.didSub}</p>
+                    <div class="max-w-2xl mx-auto bg-white border border-slate-200 rounded-xl p-6 md:p-8 shadow-sm">
+                        <h2 class="text-xl font-bold text-slate-900 border-b pb-3 mb-5">🎓 ${current.didTitulo}</h2>
+                        
+                        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-5">
+                            <h4 class="font-bold text-amber-900 text-xs mb-0.5">${current.consejoTitulo}</h4>
+                            <p class="text-amber-950 text-xs leading-relaxed">${current.didConsejo}</p>
                         </div>
-                        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl mb-6">
-                            <h4 class="font-bold text-amber-900 text-sm mb-1">${current.consejoTitulo}</h4>
-                            <p class="text-amber-950 text-sm">${current.didConsejo}</p>
-                        </div>
+
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-1">📁 ${current.didPreguntaNivel}</label>
-                                <select class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm bg-white">
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">📁 ${current.didPreguntaNivel}</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-slate-900">
                                     <option value="">${current.didNivelSeleccione}</option>
                                     <option value="1">${current.didNivel1}</option>
                                     <option value="2">${current.didNivel2}</option>
@@ -200,39 +326,89 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-1">⏳ ${current.didPreguntaMomento}</label>
-                                <select class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm bg-white">
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">⏳ ${current.didPreguntaMomento}</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-slate-900">
                                     <option value="1">${current.didMomento1}</option>
                                     <option value="2">${current.didMomento2}</option>
                                     <option value="3">${current.didMomento3}</option>
                                     <option value="4">${current.didMomento4}</option>
                                 </select>
                             </div>
+
                             <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-1">✏️ ${current.didPreguntaTema}</label>
-                                <input type="text" class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm" placeholder="${current.didPlaceholderTema}">
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">✏️ ${current.didPreguntaTema}</label>
+                                <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm h-32 resize-none focus:outline-slate-900" placeholder="${current.didPlaceholderTema}"></textarea>
                             </div>
+
+                            <div class="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3">
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">${current.adjuntarLabel}</label>
+                                <input type="file" class="text-xs text-slate-600 block w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-800 hover:file:bg-slate-300 cursor-pointer">
+                            </div>
+
                             <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-1">👥 ${current.didPreguntaDiversidad}</label>
-                                <textarea class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm h-20 resize-none" placeholder="Ej: Ritmos de aprendizaje diversos, necesidades de apoyo visual..."></textarea>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">👥 ${current.didPreguntaDiversidad}</label>
+                                <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm h-20 resize-none focus:outline-slate-900" placeholder="Ej: Ritmos de aprendizaje diversos, configuraciones de apoyo visual específicas..."></textarea>
                             </div>
-                            <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all mt-4">${current.btnGenerar}</button>
+
+                            <button onclick="procesarAccion('didactica')" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg text-sm transition-all shadow-sm mt-3">
+                                ${procesando ? current.procesandoTxt : current.btnGenerar}
+                            </button>
                         </div>
+
+                        <div id="resultado-box"></div>
                     </div>
                 `;
             }
 
             html += `</main>`;
             document.getElementById('app').innerHTML = html;
+            
+            if (resultadoSimulado) {
+                document.getElementById('resultado-box').innerHTML = resultadoSimulado;
+            }
         }
 
-        // Funciones de control de la app
-        function navigate(sec) { section = sec; cronogramaCalculado = false; render(); }
+        // Controladores lógicos de navegación y estado
+        function navigate(sec) { section = sec; cronogramaCalculado = false; resultadoSimulado = null; render(); }
         function setLanguage(l) { lang = l; render(); }
         function setMeta(m) { meta = m; render(); }
         function calcularCrono() { cronogramaCalculado = true; render(); }
 
-        // Carga inicial
+        // Simulación activa de las respuestas interactivas de Clara
+        function procesarAccion(tipo) {
+            procesando = true;
+            render();
+            
+            setTimeout(() => {
+                procesando = false;
+                const tit = t[lang].resultadoTitulo;
+                if (tipo === 'contenidos') {
+                    resultadoSimulado = `
+                        <div class="mt-6 bg-emerald-50 border border-emerald-200 rounded-xl p-5 animate-fadeIn">
+                            <h3 class="text-sm font-bold text-emerald-900 mb-2">${tit}</h3>
+                            <p class="text-xs text-emerald-950 mb-3"><strong>Clara responde:</strong> Basado en tu nivel académico y el tiempo diario configurado, acá tenés la propuesta explicativa y visual personalizada para resolver tu consulta:</p>
+                            <div class="bg-white p-3 rounded-lg border border-emerald-100 text-xs text-slate-600 space-y-1">
+                                <p>• <strong>Paso 1:</strong> Representación gráfica concreta utilizando los soportes visuales seleccionados.</p>
+                                <p>• <strong>Paso 2:</strong> Desafío lúdico integrador adaptado a tu ritmo.</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultadoSimulado = `
+                        <div class="mt-6 bg-slate-100 border border-slate-300 rounded-xl p-5 animate-fadeIn">
+                            <h3 class="text-sm font-bold text-slate-900 mb-2">${tit}</h3>
+                            <p class="text-xs text-slate-950 mb-3"><strong>Clara responde:</strong> Analicé el contenido matemático y las características grupales descritas. Te propongo este estrategia de intervención constructivista:</p>
+                            <div class="bg-white p-3 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-2">
+                                <p><strong>Fase de Exploración:</strong> Diseño de un problema abierto para la confrontación de procedimientos matemáticos autónomos.</p>
+                                <p><strong>Atención a la Diversidad:</strong> Consignas diferenciadas y andamiajes específicos basados en los comentarios de tu grupo.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                render();
+            }, 1000);
+        }
+
         render();
     </script>
 </body>
