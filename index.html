@@ -594,9 +594,17 @@ function toggleLang() {
 
 // ── AUTH ──
 function checkPass() {
-  var v = document.getElementById('password-input').value.trim();
-  if (v === PASS) { document.getElementById('screen-password').style.display = 'none'; goTo('landing'); checkResume(); }
-  else { document.getElementById('pass-error').style.display = 'block'; }
+  var input = document.getElementById('password-input');
+  var v = input.value.trim().toLowerCase();
+  var p = PASS.toLowerCase();
+  if (v === p) { 
+    document.getElementById('screen-password').style.display = 'none'; 
+    goTo('landing'); 
+    checkResume(); 
+  } else { 
+    document.getElementById('pass-error').style.display = 'block';
+    console.log('Entered:', v, 'Expected:', p);
+  }
 }
 
 // ── NAV ──
